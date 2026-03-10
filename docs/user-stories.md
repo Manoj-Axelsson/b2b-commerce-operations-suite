@@ -108,7 +108,7 @@ As a user, I should be able to add a product to the cart and collect all chosen 
 
 - If a product becomes out of stock after being added to the cart (e.g. another customer purchased the last unit), the user is notified with a warning when they next view the cart.
 - If the user adds the same item more than once, the cart increments the existing line's quantity rather than creating a duplicate entry.
-- If the user is not logged in, the cart is stored in local storage (or a session cookie). Upon login, the guest cart is merged with any existing saved cart on the user's account. Duplicate items are consolidated.
+- If the user is not logged in, the cart is stored in browser session storage (or a non-persistent session cookie) so that it only persists for the current browser session. Upon login, the guest cart is merged with any existing saved cart on the user's account. Duplicate items are consolidated.
 - If a maximum order quantity exists for a product, the **Add to Cart** button or quantity selector is disabled once the limit is reached, and a message explaining the limit is shown.
 - If adding to the cart fails due to a network error, an error message is displayed and the cart state is not changed.
 
