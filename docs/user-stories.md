@@ -20,7 +20,7 @@ Situations where the system could behave incorrectly if they are not considered.
 
 Rajput Foods web shop occupies an unusual position: it is not purely a consumer shop, and it is not purely a B2B supplier either. It begins as a hybrid marketplace. Private customers and wholesale buyers use the same storefront at first, and differentiation only appears later through contracts and volume agreements. From a product design perspective: this should reduce complexity early, grow sophistication later.
 
-In the first phase, the web shop should behave like a standard retail e-commerce platform, to lower the barrier for customers. Wholesalers can still order through the same interface, but nothing about the system initially forces different pricing models. After six months, the system can evolve to support contract pricing, tiered discounts, or wholesale catalogs. Building awareness first, is essentially a market-entry strategy.
+In the first phase, the web shop should behave like a standard retail e-commerce platform, to lower the barrier for customers. Wholesalers can still order through the same interface, but nothing about the system initially forces different pricing models. After six months, the system can evolve to support contract pricing, tiered discounts, or wholesale catalogs. Building awareness first is essentially a market-entry strategy.
 
 ---
 
@@ -62,7 +62,7 @@ As a visitor to the web shop, the user should be able to see all available produ
 - Each product shows a name, image, price, and short description.
 - Products can be opened to view more details.
 - Products that are out of stock are displayed but cannot be selected into the cart.
-- Out-of-stock products use a visually distinct style (changed colour, opacity, or background colour) to communicate their unavailability.
+- Out-of-stock products use a visually distinct style (changed color, opacity, or background color) to communicate their unavailability.
 
 ### Edge Cases
 
