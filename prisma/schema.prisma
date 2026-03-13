@@ -33,7 +33,7 @@ model User {
   name           String
   email          String
   emailVerified  Boolean         @default(false)
-  password       String? // For credential-based accounts (optional)
+  password       String? // Optional password field for credential provider accounts
   image          String?
   role           String? // "ADMIN", "SHOP_KEEPER", "CUSTOMER"
   isRegistered   Boolean         @default(false) // To hide/show prices
