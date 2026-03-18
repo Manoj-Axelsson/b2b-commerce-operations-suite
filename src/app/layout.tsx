@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { EB_Garamond } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const garb = EB_Garamond({
+  variable: "--font-garamond",
   subsets: ["latin"],
 });
 
@@ -25,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${garb.className} antialiased text-gray-900 bg-[#e9d9bf]/50 min-h-screen flex flex-col`}
       >
-        {children}
+        < main className="flex-1 flex flex-col">
+          {children}
+        </main>
       </body>
     </html>
   );
