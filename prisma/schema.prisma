@@ -1,20 +1,17 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// PRISMA CLIENT GENERATOR
 // Generates Prisma Client for database queries
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
-// DATABASE CONNECTION
 // PostgreSQL database used for the application
 datasource db {
   provider = "postgresql"
 }
 
-// ENUMS
 // Strong typing  order status
 // Prevents invalid values being stored in DB
 enum OrderStatus {
@@ -25,7 +22,6 @@ enum OrderStatus {
   CANCELLED
 }
 
-// USER MODEL
 // Stores authenticated users from Better Auth.
 // Includes role and registration flag for pricing visibility.
 model User {
@@ -33,7 +29,6 @@ model User {
   name           String
   email          String
   emailVerified  Boolean         @default(false)
-  password       String? // Optional password field for credential provider accounts
   image          String?
   role           String? // "ADMIN", "SHOP_KEEPER", "CUSTOMER"
   isRegistered   Boolean         @default(false) // To hide/show prices
@@ -50,7 +45,6 @@ model User {
   @@map("user")
 }
 
-// SESSION MODEL
 // Stores active login sessions for authenticated users.
 // Managed by Better Auth.
 model Session {
@@ -69,7 +63,6 @@ model Session {
   @@map("session")
 }
 
-// ACCOUNT MODEL
 // Stores OAuth or credential provider accounts linked to users.
 // Used by Better Auth.
 model Account {
@@ -92,7 +85,6 @@ model Account {
   @@map("account")
 }
 
-// VERIFICATION MODEL
 // Handles email verification and OTP verification flows.
 // Used for signup, login verification etc.
 model Verification {
@@ -107,7 +99,6 @@ model Verification {
   @@map("verification")
 }
 
-// CATEGORY MODEL
 // Stores product categories used for product grouping. 
 model Category {
   id       String    @id @default(uuid())
@@ -120,14 +111,12 @@ model Category {
   @@map("category")
 }
 
-// DISCOUNT TYPE ENUM
 enum DiscountType {
   SPECIAL_OFFER //for expiry-based discounts 
   PROMOTION //for time-limited discounts like seasonal sales
   CLEARANCE //for end-of-life products or overstock clearance
 }
 
-// PRODUCT MODEL
 // Stores product catalog including pricing, inventory,
 // expiry tracking, and category relations.
 model Product {
@@ -161,7 +150,8 @@ model Product {
 
   lastRestockedAt DateTime? // Timestamp of last restock for inventory management
 
-  isActive Boolean @default(true) // For soft deletion and admin control
+  isActive  Boolean @default(true) // For soft deletion and admin control
+  isDeleted Boolean @default(false) // Soft delete flag to prevent removing historical order data
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -183,7 +173,6 @@ model Product {
   @@map("product")
 }
 
-// WISHLIST MODEL
 // Allows users to save products for future purchase.
 model Wishlist {
   id        String @id @default(uuid())
@@ -201,7 +190,6 @@ model Wishlist {
   @@map("wishlist")
 }
 
-// ORDER MODEL
 // Stores customer orders and tracks order status.
 model Order {
   id String @id @default(uuid())
@@ -216,8 +204,8 @@ model Order {
   sentToAdminMail Boolean @default(false) // Flag to track if admin notification email has been sent
 
   // Address reference for delivery details at the time of order
-  addressId String
-  address   Address @relation(fields: [addressId], references: [id])
+  addressId String?
+  address   Address? @relation(fields: [addressId], references: [id])
 
   // Address snapshot (prevents historical issues)
   deliveryStreet     String
@@ -233,7 +221,6 @@ model Order {
   @@map("order")
 }
 
-// ORDER ITEM MODEL
 // Stores products included in each order with
 // quantity and price snapshot.
 model OrderItem {
@@ -247,14 +234,13 @@ model OrderItem {
   productName String // e.g., "Organic Himalayan Salt"
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict) // Prevent deletion of products that are part of existing orders
 
   @@index([orderId])
   @@index([productId])
   @@map("order_item")
 }
 
-/// SETTINGS MODEL
 // Stores global application configuration.
 // Only one row should exist in production.
 model Settings {
@@ -268,7 +254,6 @@ model Settings {
   @@map("settings")
 }
 
-// ADDRESS MODEL
 // Stores user delivery addresses for orders
 model Address {
   id String @id @default(uuid())
@@ -301,7 +286,6 @@ model Address {
   @@map("address")
 }
 
-// STOCK CHANGE TYPE ENUM
 enum StockChangeType {
   RESTOCK // New stock added to inventory
   SALE // Product sold
@@ -310,7 +294,6 @@ enum StockChangeType {
   RETURN // Returned stock
 }
 
-// STOCK MOVEMENT MODEL
 // Tracks every stock change for auditing
 model StockMovement {
   id String @id @default(uuid())
