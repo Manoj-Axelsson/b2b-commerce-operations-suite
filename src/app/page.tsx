@@ -1,6 +1,14 @@
+import Header from "@/components/layout/header";
+import Hero from "@/components/layout/hero";
 
-import Hero from '../components/layout/Hero';
+const Page = () => {
+  return (
+    <main className="relative min-h-screen bg-white">
+      <Header />
+      <Hero />
+    </main>
+  );
+};
 
-export default function Page() {
-  return <Hero />;
-}
+export default Page;
+

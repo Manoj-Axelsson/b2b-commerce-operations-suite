@@ -1,9 +1,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-interface HeroProps { }
-
-const Hero = ({ }: HeroProps) => {
+const Hero = () => {
     return (
         <section className="relative min-h-screen w-full flex flex-col items-center text-center">
             <div className="fixed inset-[-5%] -z-10 bg-white overflow-hidden">
@@ -41,3 +39,4 @@ const Hero = ({ }: HeroProps) => {
 };
 
 export default Hero;
+
