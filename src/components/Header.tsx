@@ -4,7 +4,7 @@ type HeaderProps = {
     className?: string;
 };
 
-export const Header = ({ className }: HeaderProps) => {
+export const Header = ({ className = "" }: HeaderProps) => {
     return (
         <header className={`flex justify-center items-center ${className}`}>
             <Image
