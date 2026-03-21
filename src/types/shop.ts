@@ -2,15 +2,15 @@
  * Product Interface (UI-Centric)
  * 
  * Defines the structure for products used in the browsing feature.
- * This ensures the UI can build independently of the database schema state
- * during parallel development phases.
+ * 
+ * TODO: Replace with Prisma Product type once schema is merged
  */
 export interface Product {
     id: string;
     name: string;
     brand: string;
     articleNo: string;
-    weightValue: string | number;
+    weightValue: number;
     weightUnit: string;
     price: number; // In cents
     discountPrice?: number | null; // In cents
