@@ -17,7 +17,7 @@ const Hero = () => {
                 </p>
 
                 <Button
-                    size="lg"
+                    size="md"
                     className="rounded-full px-16 py-8 text-xl font-bold uppercase tracking-[0.4em] text-white bg-linear-to-r from-brand-gold-dark via-brand-gold to-brand-gold-dark hover:brightness-110 hover:scale-105 transition-all duration-300 shadow-xl shadow-brand-gold-dark/40 border-none"
                 >
 

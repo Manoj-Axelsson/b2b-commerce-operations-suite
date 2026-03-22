@@ -8,6 +8,7 @@ const Header = () => {
                     src="/rajput_logo.svg"
                     alt="Rajput Foods Logo"
                     fill
+                    sizes="100vw"
                     priority
 
                     className="object-contain mix-blend-multiply"
