@@ -2,21 +2,19 @@ import Image from "next/image";
 
 const Header = () => {
     return (
-        <header className="fixed top-0 left-0 w-full z-50 flex justify-center p-8 pointer-events-none">
-            <div className="relative w-[220px] md:w-[320px] aspect-square opacity-95 mix-blend-multiply pointer-events-auto">
+        <header className="relative w-full flex justify-center pt-24 pb-12 z-20">
+            <div className="relative w-[280px] md:w-[450px] aspect-square">
                 <Image
-                    src="/rajput-logo.svg"
+                    src="/rajput_logo.svg"
                     alt="Rajput Foods Logo"
-                    width={400}
-                    height={400}
+                    fill
                     priority
-                    className="w-[280px] md:w-[400px] h-auto object-contain" />
+
+                    className="object-contain mix-blend-multiply"
+                />
             </div>
         </header>
     );
 };
 
 export default Header;
-
-
-
