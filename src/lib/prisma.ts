@@ -1,10 +1,15 @@
 import { PrismaClient } from '../generated/prisma';
-import { prismaConfig } from '../../prisma.config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as pg from 'pg';
 
-const pool = new pg.Pool({ connectionString: prismaConfig.url });
-const adapter = new PrismaPg(pool);
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not defined in environment variables');
+}
+
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool as any);
 
 const prismaClientSingleton = () => {
   return new PrismaClient({ adapter });

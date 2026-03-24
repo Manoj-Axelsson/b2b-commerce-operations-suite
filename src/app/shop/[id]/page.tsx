@@ -67,7 +67,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
                         productId={product.id}
                         basePrice={product.price}
                         discountPrice={product.discountPrice}
-                        stockQuantity={product.quantity}
+                        quantity={product.quantity}
                     />
                     <div className="mt-10 border-t border-brand-gold/10 pt-6">
                         <p className="text-xs text-brand-primary/40 font-mono">

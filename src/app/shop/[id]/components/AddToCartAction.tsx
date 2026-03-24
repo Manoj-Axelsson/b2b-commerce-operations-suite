@@ -7,17 +7,17 @@ interface AddToCartActionProps {
     productId: string;
     basePrice: number;
     discountPrice?: number | null;
-    stockQuantity: number;
+    quantity: number;
 }
 
 const AddToCartAction = ({
     productId,
     basePrice,
     discountPrice,
-    stockQuantity
+    quantity
 }: AddToCartActionProps) => {
     const [isAdding, setIsAdding] = useState(false);
-    const isInStock = stockQuantity > 0;
+    const isInStock = quantity > 0;
     const displayPrice = discountPrice ?? basePrice;
 
     const handleAddToCart = async () => {
