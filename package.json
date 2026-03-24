@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "check-code": "next lint src",
+    "check-code": "eslint src",
     "lint": "npm run check-code",
     "postinstall": "prisma generate"
   },
