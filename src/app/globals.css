@@ -48,7 +48,7 @@
 
   --color-brand-gold: oklch(0.762 0.16 75);
   --color-brand-gold-dark: oklch(0.589 0.14 70);
-  --color-brand-primary: oklch(0.205 0 0);
+  --color-brand-cream: oklch(0.97 0.03 100);
 }
 
 :root {

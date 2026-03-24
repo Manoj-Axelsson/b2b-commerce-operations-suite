@@ -6,7 +6,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 
 export const ProductCard = ({ product, priority }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
-    const isDiscounted = !!product.discountPrice && !!product.price;
+    const isDiscounted = product.discountPrice != null && product.price != null && product.discountPrice < product.price;
 
     return (
         <div className={cn(

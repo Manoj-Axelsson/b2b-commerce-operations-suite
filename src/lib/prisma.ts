@@ -1,7 +1,7 @@
 import { PrismaClient } from '../generated/prisma';
 import { prismaConfig } from '../../prisma.config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
+import * as pg from 'pg';
 
 const pool = new pg.Pool({ connectionString: prismaConfig.url });
 const adapter = new PrismaPg(pool);
