@@ -1,6 +1,9 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// PRISMA CLIENT GENERATOR
+// Generates Prisma Client for database queries
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,16 +13,31 @@ datasource db {
   provider = "postgresql"
 }
 
+enum OrderStatus {
+  IN_PROCESS
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id             String          @id
+  name           String
+  email          String
+  emailVerified  Boolean         @default(false)
+  password       String?
+  image          String?
+  role           String?
+  isRegistered   Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  sessions       Session[]
+  accounts       Account[]
+  stockMovements StockMovement[]
+  orders         Order[]
+  wishlist       Wishlist[]
+  addresses      Address[]
 
   @@unique([email])
   @@map("user")
@@ -71,4 +89,197 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("category")
+}
+
+enum DiscountType {
+  SPECIAL_OFFER
+  PROMOTION
+  CLEARANCE
+}
+
+model Product {
+  id String @id @default(uuid())
+
+  articleNo String  @unique
+  barcode   String? @unique
+
+  name  String
+  brand String
+
+  weightValue Int
+  weightUnit  String
+
+  ingredients String?
+  description String?
+
+  imageUrl String?
+  images   String[]
+
+  price         Int
+  discountPrice Int?
+
+  discountStart DateTime?
+  discountEnd   DateTime?
+  discountType  DiscountType?
+
+  quantity    Int @default(0)
+  minQuantity Int @default(5)
+
+  expiryDate DateTime?
+
+  lastRestockedAt DateTime?
+
+  isActive Boolean @default(true)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  orderItems     OrderItem[]
+  wishlistedBy   Wishlist[]
+  stockMovements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([brand])
+  @@index([expiryDate])
+  @@index([quantity])
+  @@index([categoryId, brand])
+  @@index([discountStart, discountEnd])
+  @@index([name])
+  @@map("product")
+}
+
+model Wishlist {
+  id        String @id @default(uuid())
+  userId    String
+  productId String
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist")
+}
+
+model Order {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  totalPrice Int
+
+  status OrderStatus @default(IN_PROCESS)
+
+  sentToAdminMail Boolean @default(false)
+
+  addressId String
+  address   Address @relation(fields: [addressId], references: [id])
+
+  deliveryStreet     String
+  deliveryCity       String
+  deliveryPostalCode String
+  deliveryCountry    String
+
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@map("order")
+}
+
+model OrderItem {
+  id          String @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  price       Int
+  productName String
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_item")
+}
+
+model Settings {
+  id String @id @default(uuid())
+
+  adminEmailNotifications Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model Address {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  addressLabel String? @default("Home")
+  firstName    String
+  lastName     String
+
+  street      String
+  houseNumber String
+  apartment   String?
+  city        String
+  postalCode  String
+  country     String
+  phoneNumber String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@index([userId])
+  @@map("address")
+}
+
+enum StockChangeType {
+  RESTOCK
+  SALE
+  ADJUSTMENT
+  DAMAGE
+  RETURN
+}
+
+model StockMovement {
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  changeType StockChangeType
+  quantity   Int
+  note       String?
+
+  performedByUserId String?
+  performedByUser   User?   @relation(fields: [performedByUserId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("stock_movement")
 }
