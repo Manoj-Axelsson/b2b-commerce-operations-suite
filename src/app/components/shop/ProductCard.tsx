@@ -1,5 +1,3 @@
-/* Removed "use client" as interactivity is deferred */
-
 import Image from "next/image";
 import { ProductCardProps } from "@/types/shop";
 import { formatCurrency, cn } from "@/lib/utils";

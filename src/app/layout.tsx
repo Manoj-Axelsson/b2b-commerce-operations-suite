@@ -23,16 +23,21 @@ export const metadata: Metadata = {
   description: "Quality you can trust. Service defined by integrity",
 };
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+const RootLayout = ({ children }: RootLayoutProps) => {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} antialiased`}>
-      <body>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} antialiased`}
+    >
+      <body className="min-h-screen bg-background font-sans">
         {children}
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

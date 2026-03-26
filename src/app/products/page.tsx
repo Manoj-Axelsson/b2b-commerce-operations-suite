@@ -1,4 +1,4 @@
-import { ProductGrid } from "@/components/shop/ProductGrid";
+import { ProductGrid } from "@/app/components/shop/ProductGrid";
 import { Product } from "@/types/shop";
 
 const MOCK_PRODUCTS: Product[] = [
@@ -42,8 +42,8 @@ export default function ProductsPage() {
     return (
         <main className="min-h-screen bg-brand-cream/30 py-20 px-4 md:px-8">
             <div className="max-w-7xl mx-auto">
-                <ProductGrid 
-                    products={MOCK_PRODUCTS} 
+                <ProductGrid
+                    products={MOCK_PRODUCTS}
                     categoryName="All Products"
                 />
             </div>

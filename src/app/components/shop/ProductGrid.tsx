@@ -1,16 +1,13 @@
-/* Removed "use client" as grid is currently data-only */
-
 import { ProductGridProps } from "@/types/shop";
 import { ProductCard } from "./ProductCard";
 
 export const ProductGrid = ({ products, categoryName, isEmpty }: ProductGridProps) => {
 
-    // Empty State UI
     if (isEmpty || products.length === 0) {
         return (
             <div className="w-full py-20 flex flex-col items-center justify-center text-center animate-in fade-in duration-700">
                 <div className="w-20 h-20 bg-brand-cream rounded-full flex items-center justify-center mb-6 border border-brand-gold/10">
-        <svg
+                    <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
