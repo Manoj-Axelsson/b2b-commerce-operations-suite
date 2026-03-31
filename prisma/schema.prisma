@@ -1,33 +1,52 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// PRISMA CLIENT GENERATOR
 // Generates Prisma Client for database queries
-
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
+// PostgreSQL database used for the application
 datasource db {
   provider = "postgresql"
 }
 
+// Strong typing  order status
+// Prevents invalid values being stored in DB
+enum OrderStatus {
+  IN_PROCESS
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// Stores authenticated users from Better Auth.
+// Includes role and registration flag for pricing visibility.
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id             String          @id
+  name           String
+  email          String
+  emailVerified  Boolean         @default(false)
+  image          String?
+  role           String? // "ADMIN", "SHOP_KEEPER", "CUSTOMER"
+  isRegistered   Boolean         @default(false) // To hide/show prices
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  sessions       Session[]
+  accounts       Account[]
+  stockMovements StockMovement[] // Track stock changes performed by this user
+  orders         Order[] // Orders placed by this user
+  wishlist       Wishlist[] // Wishlist items for this user
+  addresses      Address[] // Delivery addresses for this user
 
   @@unique([email])
   @@map("user")
 }
 
+// Stores active login sessions for authenticated users.
+// Managed by Better Auth.
 model Session {
   id        String   @id
   expiresAt DateTime
@@ -44,6 +63,8 @@ model Session {
   @@map("session")
 }
 
+// Stores OAuth or credential provider accounts linked to users.
+// Used by Better Auth.
 model Account {
   id                    String    @id
   accountId             String
@@ -64,6 +85,8 @@ model Account {
   @@map("account")
 }
 
+// Handles email verification and OTP verification flows.
+// Used for signup, login verification etc.
 model Verification {
   id         String   @id
   identifier String
@@ -73,47 +96,218 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
-
   @@map("verification")
 }
 
+// Stores product categories used for product grouping.
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id       String    @id @default(uuid())
+  name     String    @unique // e.g., "Spices"
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("category")
 }
 
-model Product {
-  id           String          @id @default(cuid())
-  articleNo    String          @unique
-  brand        String
-  name         String
-  description  String
-  price        Int             // Price in öre (cents)
-  weightValue  Float
-  weightUnit   String
-  imageUrl     String
-  quantity     Int             @default(0)
-  categoryId   String
-  category     Category        @relation(fields: [categoryId], references: [id])
-  movements    StockMovement[]
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+enum DiscountType {
+  SPECIAL_OFFER //for expiry-based discounts
+  PROMOTION //for time-limited discounts like seasonal sales
+  CLEARANCE //for end-of-life products or overstock clearance
+}
 
+// Stores product catalog including pricing, inventory,
+// expiry tracking, and category relations.
+model Product {
+  id String @id @default(uuid())
+
+  articleNo String  @unique
+  barcode   String? @unique
+
+  name  String
+  brand String
+
+  weightValue Int // e.g., 500, 1000, 500, 5000
+  weightUnit  String // e.g., "g", "kg", "ml", "l"
+
+  ingredients String?
+  description String? // product description for customers
+
+  imageUrl String?
+
+  price         Int
+  discountPrice Int? // Optional discounted price for promotions
+
+  discountStart DateTime?
+  discountEnd   DateTime?
+  discountType  DiscountType? // Type of discount (e.g., "SPECIAL_OFFER", "PROMOTION", "CLEARANCE")
+
+  quantity    Int @default(0) // Current stock quantity
+  minQuantity Int @default(5) // Minimum quantity before restock alert
+
+  expiryDate DateTime?
+
+  lastRestockedAt DateTime? // Timestamp of last restock for inventory management
+
+  isActive  Boolean @default(true) // For soft deletion and admin control
+  isDeleted Boolean @default(false) // Soft delete flag to prevent removing historical order data
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  orderItems     OrderItem[]
+  wishlistedBy   Wishlist[]
+  stockMovements StockMovement[] // Track stock changes for this product
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId]) //category filtering
+  @@index([brand]) //brand filtering
+  @@index([expiryDate]) //expiry date filtering
+  @@index([quantity]) //stock availability filtering
+  @@index([categoryId, brand]) //combined category and brand filtering
+  @@index([discountStart, discountEnd]) //discount active filtering
+  @@index([name]) //name search filtering
   @@map("product")
 }
 
-model StockMovement {
-  id        String   @id @default(cuid())
+// Allows users to save products for future purchase.
+model Wishlist {
+  id        String @id @default(uuid())
+  userId    String
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int      // Positive for stock in, negative for stock out
-  type      String   // E.g., "PURCHASE", "SALE", "ADJUSTMENT"
-  reason    String?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Prevent duplicate wishlist entries
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist")
+}
+
+// Stores customer orders and tracks order status.
+model Order {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  totalPrice Int
+
+  status OrderStatus @default(IN_PROCESS)
+
+  sentToAdminMail Boolean @default(false) // Flag to track if admin notification email has been sent
+
+  // Address reference for delivery details at the time of order
+  addressId String?
+  address   Address? @relation(fields: [addressId], references: [id])
+
+  // Address snapshot (prevents historical issues)
+  deliveryStreet     String
+  deliveryCity       String
+  deliveryPostalCode String
+  deliveryCountry    String
+
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId]) // For querying orders by user
+  @@map("order")
+}
+
+// Stores products included in each order with
+// quantity and price snapshot.
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+
+  // These store the data EXACTLY as it was at the moment of purchase
+  quantity    Int
+  price       Int
+  productName String // e.g., "Organic Himalayan Salt"
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict) // Prevent deletion of products that are part of existing orders
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_item")
+}
+
+// Stores global application configuration.
+// Only one row should exist in production.
+model Settings {
+  id String @id @default(uuid())
+
+  adminEmailNotifications Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// Stores user delivery addresses for orders
+model Address {
+  id String @id @default(uuid())
+
+  // Link to the User
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Labeling and Recipient info
+  addressLabel String? @default("Home") // e.g., "Work"
+  firstName    String
+  lastName     String
+
+  // Location details
+  street      String
+  houseNumber String
+  apartment   String? // Optional: Floor, Suite, etc.
+  city        String
+  postalCode  String
+  country     String
+  phoneNumber String? // Contact number for delivery driver
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  orders Order[]
+
+  @@index([userId])
+  @@map("address")
+}
+
+enum StockChangeType {
+  RESTOCK // New stock added to inventory
+  SALE // Product sold
+  ADJUSTMENT // Inventory adjustment (e.g., manual correction)
+  DAMAGE // Damaged stock
+  RETURN // Returned stock
+}
+
+// Tracks every stock change for auditing
+model StockMovement {
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  changeType StockChangeType // "RESTOCK", "SALE", "ADJUSTMENT", "DAMAGE", "RETURN"
+  quantity   Int
+  note       String? // Optional note for the stock change
+
+  performedByUserId String? // User who performed the stock change (optional for automated changes)
+  performedByUser   User?   @relation(fields: [performedByUserId], references: [id]) // Relation to User for tracking who made the change
+
   createdAt DateTime @default(now())
 
   @@index([productId])
