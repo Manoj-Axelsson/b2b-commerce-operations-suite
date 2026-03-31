@@ -1,4 +1,4 @@
-import type { User as PrismaUser, Session, Account } from "../../../generated/prisma";
+import type { User as PrismaUser, Session, Account } from "../../../generated/prisma/client";
 
 export type User = PrismaUser;
 
