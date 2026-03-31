@@ -44,9 +44,11 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
+  --color-brand-primary: oklch(0.205 0.14 285);
   --color-brand-gold: oklch(0.762 0.16 75);
-  --color-brand-gold-dark: oklch(0.589 0.14 70);
-  --color-brand-cream: oklch(0.97 0.03 100);
+  --color-brand-gold-dark: oklch(0.489 0.12 70);
+  --color-brand-cream: oklch(0.95 0.02 90);
+  --color-brand-border: oklch(0.75 0.06 75);
 }
 
 :root {

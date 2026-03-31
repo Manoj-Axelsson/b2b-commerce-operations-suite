@@ -12,7 +12,15 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
-    "ignores": ["src/generated/prisma/**/*"]
+    ignores: ["src/generated/prisma/**/*"],
+  },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+      }],
+    },
   }
 ]);
 

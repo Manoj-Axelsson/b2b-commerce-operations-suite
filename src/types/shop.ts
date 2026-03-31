@@ -1,10 +1,4 @@
-/**
- * Product Interface (UI-Centric)
- * 
- * Defines the structure for products used in the browsing feature.
- * 
- * TODO: Replace with Prisma Product type once schema is merged
- */
+// TODO(#7): Replace with Prisma Product type once product features are finalized
 export interface Product {
     id: string;
     name: string;
@@ -12,23 +6,17 @@ export interface Product {
     articleNo: string;
     weightValue: number;
     weightUnit: string;
-    price: number; // In cents
-    discountPrice?: number | null; // In cents
+    price: number;
+    discountPrice?: number | null;
     imageUrl?: string | null;
     quantity: number;
 }
 
-/**
- * ProductCardProps
- */
 export interface ProductCardProps {
     product: Product;
     priority?: boolean;
 }
 
-/**
- * ProductGridProps
- */
 export interface ProductGridProps {
     products: Product[];
     categoryName?: string;

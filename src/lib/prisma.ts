@@ -1,27 +1,20 @@
-import { PrismaClient } from '../generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import * as pg from 'pg';
+import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not defined in environment variables');
-}
-
-const pool = new pg.Pool({ connectionString });
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const adapter = new PrismaPg(pool as any);
-
-const prismaClientSingleton = () => {
-  return new PrismaClient({ adapter });
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient;
 };
 
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
-}
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
 
-const prisma = globalThis.prisma ?? prismaClientSingleton();
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    adapter,
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;
-
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;

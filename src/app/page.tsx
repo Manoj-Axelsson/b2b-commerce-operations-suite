@@ -1,14 +1,14 @@
 import Image from "next/image";
-import Header from "@/app/components/layout/header";
-import Hero from "@/app/components/layout/hero";
+import Header from "@/components/layout/Header";
+import Hero from "@/components/layout/Hero";
 
 const Page = () => {
   return (
-    <main className="relative min-h-screen w-full flex flex-col">
+    <main className="relative h-dvh w-full flex flex-col overflow-hidden">
       <div className="fixed inset-0 -z-10 bg-white">
         <Image
           src="/landing_bg.svg"
-          alt="Rajput Heritage Artwork"
+          alt=""
           fill
           sizes="100vw"
           priority
@@ -16,7 +16,7 @@ const Page = () => {
         />
       </div>
 
-      <div className="relative z-20 flex flex-col w-full">
+      <div className="relative z-20 flex flex-col flex-1 w-full">
         <Header />
         <Hero />
       </div>

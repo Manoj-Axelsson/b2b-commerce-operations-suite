@@ -1,4 +1,4 @@
-import { ProductGrid } from "@/app/components/shop/ProductGrid";
+import { ProductGrid } from "@/components/shop/ProductGrid";
 import { Product } from "@/types/shop";
 
 const MOCK_PRODUCTS: Product[] = [
@@ -9,7 +9,7 @@ const MOCK_PRODUCTS: Product[] = [
         articleNo: "RF-B-001",
         weightValue: 5,
         weightUnit: "kg",
-        price: 24900, // 249.00 SEK
+        price: 24900,
         quantity: 50,
         imageUrl: null,
     },
@@ -35,12 +35,12 @@ const MOCK_PRODUCTS: Product[] = [
         price: 12000,
         quantity: 0,
         imageUrl: null,
-    }
+    },
 ];
 
 export default function ProductsPage() {
     return (
-        <main className="min-h-screen bg-brand-cream/30 py-20 px-4 md:px-8">
+        <main className="min-h-screen bg-brand-cream py-8 px-4 sm:py-12 md:py-20 sm:px-6 md:px-8">
             <div className="max-w-7xl mx-auto">
                 <ProductGrid
                     products={MOCK_PRODUCTS}
