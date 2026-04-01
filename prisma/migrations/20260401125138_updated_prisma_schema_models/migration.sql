@@ -8,8 +8,8 @@ CREATE TYPE "DiscountType" AS ENUM ('SPECIAL_OFFER', 'PROMOTION', 'CLEARANCE');
 CREATE TYPE "StockChangeType" AS ENUM ('RESTOCK', 'SALE', 'ADJUSTMENT', 'DAMAGE', 'RETURN');
 
 -- AlterTable
-ALTER TABLE "user" ADD COLUMN     "isRegistered" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "role" TEXT;
+ALTER TABLE "user" ADD COLUMN     "isApproved" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'customer';
 
 -- CreateTable
 CREATE TABLE "category" (
@@ -33,6 +33,7 @@ CREATE TABLE "product" (
     "ingredients" TEXT,
     "description" TEXT,
     "imageUrl" TEXT,
+    "images" TEXT[],
     "price" INTEGER NOT NULL,
     "discountPrice" INTEGER,
     "discountStart" TIMESTAMP(3),
@@ -43,6 +44,7 @@ CREATE TABLE "product" (
     "expiryDate" TIMESTAMP(3),
     "lastRestockedAt" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "categoryId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -67,7 +69,7 @@ CREATE TABLE "order" (
     "totalPrice" INTEGER NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'IN_PROCESS',
     "sentToAdminMail" BOOLEAN NOT NULL DEFAULT false,
-    "addressId" TEXT NOT NULL,
+    "addressId" TEXT,
     "deliveryStreet" TEXT NOT NULL,
     "deliveryCity" TEXT NOT NULL,
     "deliveryPostalCode" TEXT NOT NULL,
@@ -197,13 +199,13 @@ ALTER TABLE "wishlist" ADD CONSTRAINT "wishlist_productId_fkey" FOREIGN KEY ("pr
 ALTER TABLE "order" ADD CONSTRAINT "order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "order" ADD CONSTRAINT "order_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "address"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "order" ADD CONSTRAINT "order_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "order_item" ADD CONSTRAINT "order_item_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "order_item" ADD CONSTRAINT "order_item_productId_fkey" FOREIGN KEY ("productId") REFERENCES "product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "order_item" ADD CONSTRAINT "order_item_productId_fkey" FOREIGN KEY ("productId") REFERENCES "product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "address" ADD CONSTRAINT "address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;

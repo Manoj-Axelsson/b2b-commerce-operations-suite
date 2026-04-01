@@ -29,10 +29,9 @@ model User {
   name           String
   email          String
   emailVerified  Boolean         @default(false)
-  password       String?
   image          String?
-  role           String? // "ADMIN", "SHOP_KEEPER", "CUSTOMER"
-  isRegistered   Boolean         @default(false) // To hide/show prices
+  role           String          @default("customer") // "customer" or "admin"
+  isApproved     Boolean         @default(false) // To hide/show prices
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   sessions       Session[]
@@ -206,8 +205,8 @@ model Order {
   sentToAdminMail Boolean @default(false) // Flag to track if admin notification email has been sent
 
   // Address reference for delivery details at the time of order
-  addressId String
-  address   Address @relation(fields: [addressId], references: [id])
+  addressId String?
+  address   Address? @relation(fields: [addressId], references: [id])
 
   // Address snapshot (prevents historical issues)
   deliveryStreet     String
