@@ -30,7 +30,7 @@ model User {
   email          String
   emailVerified  Boolean         @default(false)
   image          String?
-  role           String          @default("customer") // "customer" or "admin"
+  role           String? // "customer" or "admin"
   isApproved     Boolean         @default(false) // To hide/show prices
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
