@@ -1,16 +1,21 @@
 // src/app/admin/page.tsx
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/server";
+import { auth } from "@/lib/auth/better-auth"; // ✅ Fix: Use the correct auth object
+import { headers } from "next/headers";       // ✅ Fix: Add headers for session check
 
 export default async function AdminHomePage() {
-  const user = await getCurrentUser();
-  const role = user?.role?.toLowerCase(); // Tvinga små bokstäver
+  // ✅ Fix: Use Better-Auth session check instead of missing getCurrentUser
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  
+  const user = session?.user;
 
-  // Ändra till små bokstäver här!
-  if (!user || (role !== "admin" && role !== "shop_keeper")) {
-    redirect("/"); // Om kontrollen misslyckas skickas du till startsidan
+  // Simple Redirect Logic
+  if (!user || (user.role !== "ADMIN" && user.role !== "SHOP_KEEPER")) {
+    redirect("/login");
   }
 
-  // Om kontrollen lyckas, skicka till inventory
+  // If they are an admin, send them to the inventory (or dashboard)
   redirect("/admin/inventory");
 }

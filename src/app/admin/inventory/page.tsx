@@ -1,6 +1,6 @@
  //src/app/admin/inventory/page.tsx
 
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { StockButton } from "@/components/admin/StockButton";
 
 function getStockStatus(quantity: number, minQuantity: number) {
@@ -10,11 +10,7 @@ function getStockStatus(quantity: number, minQuantity: number) {
 }
 
 export default async function AdminInventoryPage() {
-  /* --- HÅRDKODAD ÅTKOMST START --- */
-  // Vi hoppar över auth-kollen tillfälligt för utveckling
-  const user = { role: "ADMIN", email: "dev-test@example.com" }; 
-  const role = "ADMIN";
-  /* --- HÅRDKODAD ÅTKOMST SLUT --- */
+  
 
   // Hämta produkter via Prisma
   const products = await prisma.product.findMany({
