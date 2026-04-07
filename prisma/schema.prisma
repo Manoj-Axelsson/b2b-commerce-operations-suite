@@ -41,6 +41,7 @@ model User {
   orders         Order[] // Orders placed by this user
   wishlist       Wishlist[] // Wishlist items for this user
   addresses      Address[] // Delivery addresses for this user
+  cart           Cart? // One active cart per user
 
   @@unique([email])
   @@map("user")
@@ -161,6 +162,7 @@ model Product {
   orderItems     OrderItem[]
   wishlistedBy   Wishlist[]
   stockMovements StockMovement[] // Track stock changes for this product
+  cartItems      CartItem[] // Active cart items referencing this product
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -173,6 +175,37 @@ model Product {
   @@index([discountStart, discountEnd]) //discount active filtering
   @@index([name]) //name search filtering
   @@map("product")
+}
+
+// Stores the active cart for an authenticated user.
+// One cart per user — created on first add, cleared on order placement.
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("cart")
+}
+
+// Stores individual product lines within a cart.
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Prevents the same product appearing twice in one cart
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@map("cart_item")
 }
 
 // Allows users to save products for future purchase.
