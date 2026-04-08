@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ProductCardProps } from "@/types/shop";
 import { formatCurrency, cn } from "@/lib/utils";
+import { ProductImage } from "./ProductImage";
 
 export const ProductCard = ({ product, priority }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
@@ -24,11 +24,10 @@ export const ProductCard = ({ product, priority }: ProductCardProps) => {
 
             <div className="relative aspect-square w-full bg-brand-cream overflow-hidden">
                 {product.imageUrl ? (
-                    <Image
-                        src={product.imageUrl}
-                        alt=""
-                        fill
-                        className="object-contain p-6 group-hover:scale-110 transition-transform duration-700"
+                    // ProductImage handles broken URLs gracefully — falls back to Rajput placeholder
+                    <ProductImage
+                        imageUrl={product.imageUrl}
+                        name={product.name}
                         priority={priority}
                     />
                 ) : (
