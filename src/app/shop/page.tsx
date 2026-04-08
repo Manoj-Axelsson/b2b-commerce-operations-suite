@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // Fetch all active products from the database
 // isActive: true  — only show products enabled by admin
 // isDeleted: false — exclude soft-deleted products
-const ProductsPage = async () => {
+const ShopPage = async () => {
     const rawProducts = await prisma.product.findMany({
         where: {
             isActive: true,
@@ -39,12 +39,11 @@ const ProductsPage = async () => {
             <div className="max-w-7xl mx-auto">
                 <ProductGrid
                     products={products}
-                    categoryName="All Products"
+                    categoryName="Our Shop"
                 />
             </div>
         </main>
     );
 };
 
-export default ProductsPage;
-
+export default ShopPage;
