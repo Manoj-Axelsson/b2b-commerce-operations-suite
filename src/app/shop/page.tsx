@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { Product } from "@/types/shop";
 import { sortProductsImagesFirst } from "@/lib/utils";
@@ -9,6 +11,10 @@ export const dynamic = "force-dynamic";
 // isActive: true  — only show products enabled by admin
 // isDeleted: false — exclude soft-deleted products
 const ShopPage = async () => {
+    // Check session server-side — no client-side auth needed here
+    const session = await auth.api.getSession({ headers: await headers() });
+    const isLoggedIn = session?.user != null;
+
     const rawProducts = await prisma.product.findMany({
         where: {
             isActive: true,
@@ -42,6 +48,7 @@ const ShopPage = async () => {
                 <ProductGrid
                     products={products}
                     categoryName="Our Shop"
+                    isLoggedIn={isLoggedIn}
                 />
             </div>
         </main>
