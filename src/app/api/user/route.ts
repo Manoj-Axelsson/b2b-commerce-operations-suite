@@ -1,5 +1,3 @@
-// GET /api/user - Fetch current authenticated user with custom Prisma fields
-// Why: Better Auth session only includes basic fields (id, email, name, emailVerified)
 // This endpoint extends the session with custom fields (role, isApproved) from Prisma
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
@@ -34,7 +32,7 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json(dbUser);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch user" },
       { status: 500 },
