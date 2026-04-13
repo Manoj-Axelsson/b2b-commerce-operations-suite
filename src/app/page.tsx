@@ -7,8 +7,8 @@ const Page = () => {
     <main className="relative h-dvh w-full flex flex-col overflow-hidden">
       <div className="fixed inset-0 -z-10 bg-white">
         <Image
-          src="/landing_bg.svg"
-          alt=""
+          src="/heritage_background.webp"
+          alt="Rajput Foods Heritage Background"
           fill
           sizes="100vw"
           priority

@@ -10,15 +10,14 @@ export function useCart(): CartState {
 
     const syncCart = useCallback(async () => {
         try {
-            const res = await fetch("/api/cart");
+            const res = await fetch("/cart/api");
 
             if (!res.ok) throw new Error("Failed to fetch cart");
-
             const data = await res.json();
-            setItems(data.items);
+            setItems(data?.items ?? []);
             setError(null);
         } catch (err) {
-            console.error(err);
+            console.error("🚨 Hook Sync Error:", err);
             setError("Failed to sync cart");
         } finally {
             setLoading(false);
@@ -29,7 +28,6 @@ export function useCart(): CartState {
         syncCart();
     }, [syncCart]);
 
-    // Returns how many units of a product are currently in the cart
     const getCartQuantity = useCallback(
         (productId: string): number => {
             return items.find((i) => i.productId === productId)?.quantity ?? 0;
@@ -37,7 +35,6 @@ export function useCart(): CartState {
         [items]
     );
 
-    // Returns true when cart quantity for a product has reached its stock level
     const isAtStockLimit = useCallback(
         (productId: string): boolean => {
             const item = items.find((i) => i.productId === productId);
@@ -49,7 +46,7 @@ export function useCart(): CartState {
 
     const addToCart = useCallback(
         async (productId: string) => {
-            // Optimistic update — increment locally before the server responds
+
             setItems((prev) => {
                 const existing = prev.find((i) => i.productId === productId);
                 if (existing) {
@@ -59,7 +56,7 @@ export function useCart(): CartState {
                             : i
                     );
                 }
-                // Placeholder item shown until syncCart replaces it with full product data
+
                 return [...prev, { productId, quantity: 1, product: { id: productId, name: "", price: 0, quantity: 0 } }];
             });
 
@@ -110,7 +107,7 @@ export function useCart(): CartState {
 
     const removeFromCart = useCallback(
         async (productId: string) => {
-            // Optimistic update
+
             setItems((prev) => prev.filter((i) => i.productId !== productId));
 
             try {
@@ -132,12 +129,9 @@ export function useCart(): CartState {
     );
 
     const clearCart = useCallback(async () => {
-        // Optimistic update
         setItems([]);
-
         try {
             const res = await fetch("/api/cart", { method: "DELETE" });
-
             if (!res.ok) throw new Error("Clear cart failed");
         } catch (err) {
             console.error(err);
