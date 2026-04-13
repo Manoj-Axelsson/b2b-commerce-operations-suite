@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -23,16 +22,33 @@ export default function LoginPage() {
     const { error } = await authClient.signIn.email(form);
 
     if (error) {
-      setError("Invalid credentials or not verified");
+      setError("Invalid credentials or email not verified, please check your email and try again.");
       return;
     }
 
-    router.push("/account");
+    // 🔥 Fetch real user (with role)
+    const res = await fetch("/api/user");
+
+    if (!res.ok) {
+      setError("Failed to load user data");
+      return;
+    }
+
+    const user = await res.json();
+
+    // 🔥 Correct role-based redirect
+    if (user.role === "admin") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/shop");
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <AuthForm onSubmit={handleSubmit} submitLabel="Login" error={error}>
+        <h1 className="text-xl font-bold text-center">Login</h1>
+
         <FormField
           label="Email"
           type="email"
@@ -40,6 +56,7 @@ export default function LoginPage() {
           onChange={(value) => setForm({ ...form, email: value })}
           required
         />
+
         <FormField
           label="Password"
           type="password"
