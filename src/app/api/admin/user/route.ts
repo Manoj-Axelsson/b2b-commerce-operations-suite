@@ -7,23 +7,24 @@ export async function POST(req: Request) {
     headers: req.headers,
   });
 
-  // ❌ not logged in
+  // ❌ Not logged in
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch full admin user from database to check role
-  const adminUser = await prisma.user.findUnique({
+  // 🔥 Fetch user from DB
+  const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
   });
 
-  // ❌ not admin
-  if (adminUser?.role !== "admin") {
+  // ❌ Not admin
+  if (currentUser?.role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
-    const { userId } = await req.json();
+    const body = await req.json();
+    const { userId } = body;
 
     if (!userId) {
       return NextResponse.json(
