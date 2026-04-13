@@ -21,15 +21,33 @@ export default function AccountPage() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const res = await fetch("/api/user");
-      if (!res.ok) {
-        router.push("/user-login");
-        return;
-      }
+      try {
+        const res = await fetch("/api/user");
 
-      const userData = await res.json();
-      setUser(userData);
-      setLoading(false);
+        if (res.status === 401) {
+          router.push("/login");
+          return;
+        }
+
+        if (!res.ok) {
+          console.error("Failed to fetch user");
+          return;
+        }
+
+        const userData = await res.json();
+
+        // redirect admin away
+        if (userData.role === "admin") {
+          router.push("/admin/dashboard");
+          return;
+        }
+
+        setUser(userData);
+      } catch (err) {
+        console.error("Error loading user", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUser();
@@ -37,7 +55,7 @@ export default function AccountPage() {
 
   const handleLogout = async () => {
     await authClient.signOut();
-    router.push("/user-login");
+    router.push("/login");
   };
 
   if (loading) {
@@ -51,7 +69,7 @@ export default function AccountPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>User not found. Redirecting...</p>
+        <p>Something went wrong. Please try again.</p>
       </div>
     );
   }
@@ -72,7 +90,7 @@ export default function AccountPage() {
 
         {!user.isApproved && (
           <div className="p-4 bg-yellow-100 text-yellow-800 text-sm rounded">
-            Your account is awaiting admin approval. You can browse, but cannot place orders yet.
+            Your account is awaiting admin approval. You can browse, but cannot place orders or view full pricing.
           </div>
         )}
 
@@ -83,4 +101,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
