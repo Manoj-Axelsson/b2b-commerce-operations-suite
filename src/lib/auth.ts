@@ -48,7 +48,6 @@ export const auth = betterAuth({
           await prisma.user.update({
             where: { id: session.user.id },
             data: {
-              role: "customer",
               isApproved: false,
             },
           });
