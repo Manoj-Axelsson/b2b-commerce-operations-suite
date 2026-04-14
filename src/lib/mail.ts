@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 export async function sendEmail({ to, subject, html }: SendEmailParams) {
   try {
     const info = await transporter.sendMail({
-      from: `"Rajpooth Foods" <${process.env.EMAIL_USER}>`,
+      from: `"Rajput Foods" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
