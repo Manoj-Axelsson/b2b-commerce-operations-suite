@@ -3,19 +3,33 @@ import Link from "next/link";
 
 const Header = () => {
     return (
-        <header className="relative w-full flex justify-center pt-[2vh] sm:pt-[5vh] z-50">
+        // shrink-0 prevents Hero (flex-1) from squeezing the header out of the layout
+        <header className="relative w-full flex justify-center pt-[10vh] sm:pt-[12vh] z-50 shrink-0">
             <Link
                 href="/"
-                className="relative w-[clamp(300px,75vw,800px)] aspect-square transition-transform hover:scale-[1.02] duration-500"
+                className="transition-transform hover:scale-[1.02] duration-500"
             >
-                <Image
-                    src="/rajput-logo.svg"
-                    alt="Rajput Foods Sweden"
-                    fill
-                    sizes="(max-width: 768px) 75vw, 800px"
-                    priority
-                    className="object-contain"
-                />
+                <div
+                    style={{
+                        width: "clamp(160px, 20vw, 280px)",
+                        height: "clamp(160px, 20vw, 280px)",
+                        position: "relative",
+                        overflow: "hidden",
+                    }}
+                >
+                    <Image
+                        src="/rajput_logo.webp"
+                        alt="Rajput Foods Sweden"
+                        fill
+                        priority
+                        sizes="(max-width: 768px) 60vw, 25vw"
+                        style={{
+                            objectFit: "contain",
+                            transform: "scale(2.75)",
+                            transformOrigin: "center 50%",
+                        }}
+                    />
+                </div>
             </Link>
         </header>
     );
