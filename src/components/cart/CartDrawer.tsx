@@ -1,6 +1,6 @@
 "use client";
 
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/components/cart/CartContext";
 import { formatCurrency, cn } from "@/lib/utils";
 import { CartItem } from "@/types/cart";
 
@@ -11,7 +11,7 @@ interface CartItemRowProps {
 }
 
 const CartItemRow = ({ item }: CartItemRowProps) => {
-    const { updateQuantity, removeFromCart, isAtStockLimit } = useCart();
+    const { updateQuantity, removeFromCart, isAtStockLimit } = useCartContext();
 
     const atStockLimit = isAtStockLimit(item.productId);
 
@@ -90,7 +90,7 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
-    const { items, totalPrice, totalItems, clearCart, loading, error } = useCart();
+    const { items, totalPrice, totalItems, clearCart, loading, error } = useCartContext();
 
     const isEmpty = !loading && !error && items.length === 0;
 

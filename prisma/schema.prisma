@@ -30,7 +30,7 @@ model User {
   email          String
   emailVerified  Boolean         @default(false)
   image          String?
-  role           String? // "customer" or "admin"
+  role           String? // "user" (default) or "admin" — matches better-auth convention; set server-side only
   isApproved     Boolean         @default(false) // To hide/show prices
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt

@@ -10,14 +10,22 @@ export function useCart(): CartState {
 
     const syncCart = useCallback(async () => {
         try {
-            const res = await fetch("/cart/api");
+            const res = await fetch("/api/cart");
+
+            // 401 is the expected response for guests — treat it as
+            // "empty cart" rather than an error so the UI stays clean.
+            if (res.status === 401) {
+                setItems([]);
+                setError(null);
+                return;
+            }
 
             if (!res.ok) throw new Error("Failed to fetch cart");
             const data = await res.json();
             setItems(data?.items ?? []);
             setError(null);
         } catch (err) {
-            console.error("🚨 Hook Sync Error:", err);
+            console.error("useCart sync error:", err);
             setError("Failed to sync cart");
         } finally {
             setLoading(false);

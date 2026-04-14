@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/components/cart/CartContext";
 import { CartDrawer } from "./CartDrawer";
 
 export const CartButton = () => {
-    const { totalItems } = useCart();
+    const { totalItems } = useCartContext();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const openDrawer = () => setIsDrawerOpen(true);

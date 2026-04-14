@@ -36,9 +36,12 @@ export default function LoginPage() {
 
     const user = await res.json();
 
-    // 🔥 Correct role-based redirect
+    // Role-based redirect. /admin has its own role check and redirects
+    // to /admin/inventory, so pointing there avoids hard-coding the
+    // current landing route — if we add a real dashboard later, the
+    // redirect chain changes in one place.
     if (user.role === "admin") {
-      router.push("/admin/dashboard");
+      router.push("/admin");
     } else {
       router.push("/shop");
     }

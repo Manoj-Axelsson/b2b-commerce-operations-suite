@@ -9,7 +9,7 @@ const Header = () => {
                 className="relative w-[clamp(300px,75vw,800px)] aspect-square transition-transform hover:scale-[1.02] duration-500"
             >
                 <Image
-                    src="/rajput-logo.svg"
+                    src="/rajput_logo.svg"
                     alt="Rajput Foods Sweden"
                     fill
                     sizes="(max-width: 768px) 75vw, 800px"

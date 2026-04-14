@@ -2,12 +2,32 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 import { sendEmail } from "./mail";
-import { createAuthMiddleware } from "better-auth/api";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
 
   secret: process.env.BETTER_AUTH_SECRET!,
+
+  // role and isApproved are declared here so better-auth knows they exist
+  // on the user model. input: false means the client CANNOT set these in
+  // signUp.email() — role assignment is server-side only (admin/seed script).
+  // This is how we prevent a new user from registering themselves as admin.
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+      },
+      isApproved: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+    },
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -36,23 +56,5 @@ export const auth = betterAuth({
         html: `<p><a href="${url}">Verify Email</a></p>`,
       });
     },
-    sendOnSignIn: true,
-  },
-
-  hooks: {
-    after: createAuthMiddleware(async (ctx) => {
-      if (ctx.path.startsWith("/sign-up")) {
-        const session = ctx.context.newSession;
-
-        if (session?.user) {
-          await prisma.user.update({
-            where: { id: session.user.id },
-            data: {
-              isApproved: false,
-            },
-          });
-        }
-      }
-    }),
   },
 });
