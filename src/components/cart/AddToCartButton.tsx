@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/components/cart/CartContext";
 import { Product } from "@/types/shop";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ interface AddToCartButtonProps {
 }
 
 export const AddToCartButton = ({ product, className }: AddToCartButtonProps) => {
-    const { addToCart, getCartQuantity, isAtStockLimit } = useCart();
+    const { addToCart, getCartQuantity, isAtStockLimit } = useCartContext();
     const [isAdding, setIsAdding] = useState(false);
 
     const isOutOfStock = product.quantity <= 0;
