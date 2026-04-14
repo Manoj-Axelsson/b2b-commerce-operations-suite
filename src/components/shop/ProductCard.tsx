@@ -4,7 +4,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 
-export const ProductCard = ({ product, priority }: ProductCardProps) => {
+export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
     const isDiscounted = product.discountPrice != null && product.price != null && product.discountPrice < product.price;
 
@@ -16,7 +16,8 @@ export const ProductCard = ({ product, priority }: ProductCardProps) => {
                 !isInStock && "opacity-90 grayscale-[0.3]",
             )}
         >
-            {isDiscounted && (
+            {/* Special Offer badge — only shown to logged-in users since it references pricing */}
+            {isDiscounted && isLoggedIn && (
                 <div className="absolute top-3 left-3 z-10 bg-brand-gold-dark text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md sm:top-4 sm:left-4">
                     Special Offer
                 </div>
@@ -67,28 +68,44 @@ export const ProductCard = ({ product, priority }: ProductCardProps) => {
                         {product.weightValue}{product.weightUnit}
                     </p>
 
-                    <div className="mt-auto pt-2 border-t border-brand-border/40">
-                        {isDiscounted && product.discountPrice ? (
-                            <>
-                                <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
-                                    {formatCurrency(product.discountPrice)}
-                                </span>
-                                <span className="text-muted-foreground line-through text-xs ml-2">
+                    <div className="mt-auto pt-2 border-t border-brand-border/40 min-h-8">
+                        {isLoggedIn ? (
+                            // Prices are only visible to logged-in customers
+                            isDiscounted && product.discountPrice ? (
+                                <>
+                                    <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
+                                        {formatCurrency(product.discountPrice)}
+                                    </span>
+                                    <span className="text-muted-foreground line-through text-xs ml-2">
+                                        {formatCurrency(product.price)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
                                     {formatCurrency(product.price)}
                                 </span>
-                            </>
+                            )
                         ) : (
-                            <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
-                                {formatCurrency(product.price)}
+                            // Guests see a prompt to sign in instead of the price
+                            <span className="text-muted-foreground text-sm italic">
+                                Sign in to view price
                             </span>
                         )}
                     </div>
                 </div>
             </Link>
 
-            {/* AddToCartButton is outside the Link to avoid nested interactive elements */}
             <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-                <AddToCartButton product={product} className="w-full" />
+                {isLoggedIn ? (
+                    <AddToCartButton product={product} className="w-full" />
+                ) : (
+                    <Link
+                        href="/login"
+                        className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-brand-border text-brand-primary hover:bg-brand-cream border border-brand-border/60"
+                    >
+                        Sign in to order
+                    </Link>
+                )}
             </div>
         </article>
     );
