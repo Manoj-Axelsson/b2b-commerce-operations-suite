@@ -6,18 +6,19 @@ import { authClient } from "@/lib/auth-client";
 import { useCartContext } from "@/components/cart/CartContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
-// Floating cart button fixed to the bottom-right corner on every page.
-// Only rendered when the user has an active session — and never on the landing page.
 export const GlobalCartButton = () => {
     const pathname = usePathname();
     const { data: session, isPending } = authClient.useSession();
     const { totalItems } = useCartContext();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    // Hide on the landing page — it's an entry/marketing screen, not a shopping page
-    if (pathname === "/") return null;
+    if (
+        pathname === "/" ||
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/register")
+    ) return null;
 
-    // Don't render while session is resolving or if the user is not signed in
     if (isPending || !session?.user) return null;
 
     return (
@@ -44,7 +45,6 @@ export const GlobalCartButton = () => {
                     />
                 </svg>
 
-                {/* Badge — only visible when there are items in the cart */}
                 {totalItems > 0 && (
                     <span
                         aria-hidden="true"
