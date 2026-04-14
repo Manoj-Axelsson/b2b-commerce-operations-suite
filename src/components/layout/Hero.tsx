@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
 const Hero = () => {
@@ -16,12 +17,14 @@ const Hero = () => {
                     Quality you can trust. Service defined by integrity
                 </p>
 
-                <Button
-                    size="lg"
-                    className="rounded-full px-[clamp(2rem,5vw,4rem)] py-[clamp(0.75rem,2vh,2rem)] text-[clamp(0.875rem,1.5vw,1.25rem)] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white bg-linear-to-r from-brand-gold-dark via-brand-gold to-brand-gold-dark hover:brightness-110 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold-dark transition-all duration-300 shadow-lg border-none"
-                >
-                    Enter
-                </Button>
+                <Link href="/shop">
+                    <Button
+                        size="lg"
+                        className="rounded-full px-[clamp(2rem,5vw,4rem)] py-[clamp(0.75rem,2vh,2rem)] text-[clamp(0.875rem,1.5vw,1.25rem)] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white bg-linear-to-r from-brand-gold-dark via-brand-gold to-brand-gold-dark hover:brightness-110 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold-dark transition-all duration-300 shadow-lg border-none"
+                    >
+                        Enter
+                    </Button>
+                </Link>
             </div>
         </section>
     );

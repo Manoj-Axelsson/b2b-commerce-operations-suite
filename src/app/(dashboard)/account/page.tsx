@@ -36,9 +36,11 @@ export default function AccountPage() {
 
         const userData = await res.json();
 
-        // redirect admin away
+        // Redirect admins to the admin area. Using /admin (not
+        // /admin/dashboard, which does not exist) lets the admin root
+        // page decide the concrete landing route.
         if (userData.role === "admin") {
-          router.push("/admin/dashboard");
+          router.push("/admin");
           return;
         }
 
