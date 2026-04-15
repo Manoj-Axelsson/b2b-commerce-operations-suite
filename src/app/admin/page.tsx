@@ -1,21 +1,25 @@
-// src/app/admin/page.tsx
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/better-auth"; // ✅ Fix: Use the correct auth object
-import { headers } from "next/headers";       // ✅ Fix: Add headers for session check
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 
 export default async function AdminHomePage() {
-  // ✅ Fix: Use Better-Auth session check instead of missing getCurrentUser
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  
-  const user = session?.user;
 
-  // Simple Redirect Logic
-  if (!user || (user.role !== "ADMIN" && user.role !== "SHOP_KEEPER")) {
+  if (!session) {
     redirect("/login");
   }
 
-  // If they are an admin, send them to the inventory (or dashboard)
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+
+  if (!user || user.role !== "admin") {
+    redirect("/login");
+  }
+
   redirect("/admin/inventory");
 }
