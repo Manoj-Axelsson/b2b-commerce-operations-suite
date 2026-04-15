@@ -1,26 +1,20 @@
-import Image from "next/image";
-import Link from "next/link";
+import Link from 'next/link';
+import Image from 'next/image';
 
 const Header = () => {
     return (
-        <header className="relative w-full flex justify-center pt-[10vh] sm:pt-[12vh] z-50 shrink-0">
+        <header className="...">
             <Link
                 href="/"
-                className="transition-transform hover:scale-[1.02] duration-500"
+                className="relative block w-[clamp(340px,18vw,1400px)] transition-transform hover:scale-105"
             >
-                <Link
-                    href="/"
-                    className="relative w-[clamp(340px,18vw,1400px)] aspect-square transition-transform hover:scale-[1.02] duration-500"
-                >
-                    <Image
-                        src="/rajput_logo.webp"
-                        alt="Rajput Foods Sweden"
-                        fill
-                        sizes="(max-width: 768px) 95vw, (max-width: 1200px) 60vw, 1400px"
-                        priority
-                        className="object-contain"
-                    />
-                </Link>
+                <Image
+                    src="/refactored_logo.webp"
+                    alt="Rajput Foods Logo"
+                    width={720}
+                    height={1280}
+                    priority
+                />
             </Link>
         </header>
     );
