@@ -1,8 +1,7 @@
-//src/app/admin/customers/actions.ts
 "use server";
 
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth/better-auth";
+import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -20,8 +19,6 @@ export async function saveCustomer(formData: FormData) {
         data: { name, email, role }
       });
     } else {
-      // Schema requires 'id', 'name', 'email'. 
-      // Defaults handle 'isRegistered' (false) and 'emailVerified' (false).
       const newId = `user_${Math.random().toString(36).substring(2, 15)}`;
       await prisma.user.create({
         data: {
@@ -29,7 +26,7 @@ export async function saveCustomer(formData: FormData) {
           name,
           email,
           role,
-          isRegistered: true, // Typically true if admin creates them
+          isApproved: true,
           emailVerified: false,
         }
       });
@@ -50,12 +47,11 @@ export async function deleteCustomer(id: string) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (id === session?.user?.id) throw new Error("Self-deletion blocked.");
 
-    // Using transaction as per your "Complete Cleanup" standard
     await prisma.$transaction([
       prisma.session.deleteMany({ where: { userId: id } }),
       prisma.account.deleteMany({ where: { userId: id } }),
-      prisma.wishlist.deleteMany({ where: { userId: id } }), // Added Wishlist cleanup based on schema
-      prisma.address.deleteMany({ where: { userId: id } }),  // Added Address cleanup based on schema
+      prisma.wishlist.deleteMany({ where: { userId: id } }),
+      prisma.address.deleteMany({ where: { userId: id } }),
       prisma.order.deleteMany({ where: { userId: id } }),
       prisma.user.delete({ where: { id } }),
     ]);
