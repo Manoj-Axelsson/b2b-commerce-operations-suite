@@ -19,7 +19,6 @@ This project follows the Bulletproof React pattern, optimized for Next.js. Logic
 ________________________________________________________________________________
 
 # Directory Structure
-
 ```
 src/
 └── app/
@@ -30,10 +29,10 @@ src/
     │   └── page.tsx      # Entry point
     ├── proxy.ts          # Edge middleware/proxy logic
     └── layout.tsx        # Global layout
-
+``` 
 ________________________________________________________________________________
 
-Prerequisites for getting started:
+# Prerequisites for getting started:
 
 a. Node.js (Latest LTS)
 
@@ -43,28 +42,78 @@ c. Direct connection string for Prisma
 
 ________________________________________________________________________________
 
-Installation
+# Installation
 
 1. Clone the repository:
 
-```
 git clone https://github.com/username/repo-name.git
 cd repo-name 
 ________________________________________________________________________________
 
-Install dependencies:
-```
+2. Install dependencies:
+
 npm install
 
+________________________________________________________________________________
+
+3. Environment Setup:  Create a .env file in the root directory:
+
+DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
 
 
+________________________________________________________________________________
+
+4. Database Migration:  Generate the client to src/generated/prisma using the configuration defined in prisma.config.ts.
+
+npx prisma generate
+npx prisma db push
+________________________________________________________________________________
+
+5. Run the development server: 
+
+npm run dev
+
+________________________________________________________________________________
+
+# Development Standards
+
+To maintain code quality and peer-review readiness, we adhere to the following:
+
+a. Functional Components: All components must use arrow functions.
+
+b. Typing: Use TypeScript interface for all client-side data and props.
+
+c. Interactivity: Use 'use client' strictly for components requiring user interaction.
+
+d. Icons: Raw SVGs or standard HTML elements only (no component libraries).
+
+e. Styling: Standard Tailwind CSS classes exclusively.
+
+f. Proxying: Use proxy.ts for request handling (Note: middleware.ts is deprecated).
 
 
+________________________________________________________________________________
+
+# Database Schema
+
+The project uses Prisma 7 with the @prisma/adapter-pg for direct connections. All schemas are managed via prisma/schema.prisma and configured through prisma.config.ts.
+
+________________________________________________________________________________
+
+# Contributing
+
+a. Fork the Project.
+
+b. Create your Feature Branch (git checkout -b feature/AmazingFeature).
+
+c. Commit your Changes (git commit -m 'Add some AmazingFeature').
+
+d. Push to the Branch (git push origin feature/AmazingFeature).
+
+e. Open a Pull Request.
 
 
-
-
-
+________________________________________________________________________________
 
 # Context7 System Instruction
 
@@ -73,8 +122,9 @@ npm install
 Context7 is responsible for generating code, architectural suggestions, and project modifications. All output must strictly follow the engineering conventions defined in this document.
 These rules override all default assumptions.
 ________________________________________________________________________________
-1. Technology Stack (Immutable)
-Context7 must always assume the following stack unless explicitly overridden.
+
+# Technology Stack (Immutable)  :  Context7 must always assume the following stack unless explicitly overridden.
+
 Framework
 Next.js 16 (App Router)
 Language
@@ -97,11 +147,11 @@ Context7 must never suggest alternative frameworks unless explicitly asked.
 
 ________________________________________________________________________________
 
-
- 1. Project Architecture
+# Project Architecture
+    
 All generated files must follow this project structure.
-```
 
+```
 src/
 │
 ├─ app/                # Next.js routes and layouts
@@ -201,6 +251,7 @@ Correct pattern: grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
 Incorrect pattern: grid grid-cols-4 sm:grid-cols-1
  
 Rules:
+
 • unprefixed utilities apply to mobile
 • breakpoints enhance layouts upward
 • avoid custom CSS classes
@@ -307,6 +358,7 @@ o	npm run lint
 o	npm run build
 Avoid: @ts-ignore
 Use: @ts-expect-error only with explanation.
+
 ________________________________________
 
 13. Git Workflow:
@@ -366,12 +418,9 @@ e.	Keep components small and focused
 f.	Follow mobile-first design
 g.	Maintain deterministic database migrations
 
-
 ________________________________________
 
-Context7 Behavioral Rule:
-
-When generating code for Rajput Foods -
+Context7 Behavioral Rule:  When generating code for Rajput Foods -
 
 a.	Follow all conventions defined here.
 b.	Do not introduce architectural deviations.
