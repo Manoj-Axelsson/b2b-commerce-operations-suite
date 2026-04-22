@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 interface NavLink {
@@ -15,15 +17,13 @@ interface NavbarClientProps {
   isLoggedIn: boolean;
 }
 
-// Builds the list of nav links based on auth state and role.
-// Admin link is only included when the user has the admin role.
+// Builds nav links based on auth state.
+// Auth buttons (Sign In / Sign Up / Sign Out) are rendered separately.
 function buildLinks(isLoggedIn: boolean, isAdmin: boolean): NavLink[] {
   const links: NavLink[] = [{ href: "/shop", label: "Shop" }];
 
   if (isLoggedIn) {
     links.push({ href: "/account", label: "My Account" });
-  } else {
-    links.push({ href: "/login", label: "Sign In" });
   }
 
   if (isAdmin) {
@@ -33,14 +33,16 @@ function buildLinks(isLoggedIn: boolean, isAdmin: boolean): NavLink[] {
   return links;
 }
 
-// Returns true only when the current path matches or is under the given href.
+// Returns true when the current path matches or is under the given href.
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
 export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   // Landing page has its own branded layout — no navbar rendered there
   if (pathname === "/") return null;
@@ -48,6 +50,13 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
   const links = buildLinks(isLoggedIn, isAdmin);
 
   const closeMenu = () => setIsMenuOpen(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    await authClient.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <nav
@@ -73,8 +82,10 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
             </span>
           </Link>
 
-          {/* Desktop navigation links */}
-          <div className="hidden md:flex items-center gap-8">
+          {/* Desktop navigation */}
+          <div className="hidden md:flex items-center gap-6">
+
+            {/* Nav links */}
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -90,6 +101,35 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
                 {link.label}
               </Link>
             ))}
+
+            {/* Auth buttons */}
+            {isLoggedIn ? (
+              <button
+                id="navbar-sign-out"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="text-sm font-medium tracking-widest uppercase px-4 py-1.5 rounded-full border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-primary transition-all duration-200 disabled:opacity-50"
+              >
+                {isSigningOut ? "Signing out…" : "Sign Out"}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  id="navbar-sign-in"
+                  href="/login"
+                  className="text-sm font-medium tracking-widest uppercase px-4 py-1.5 rounded-full border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-primary transition-all duration-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  id="navbar-sign-up"
+                  href="/signup"
+                  className="text-sm font-medium tracking-widest uppercase px-4 py-1.5 rounded-full bg-brand-gold text-brand-primary hover:brightness-110 transition-all duration-200"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile hamburger button */}
@@ -138,6 +178,8 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
           className="md:hidden border-t border-white/10 bg-brand-primary"
         >
           <div className="px-4 py-3 space-y-1">
+
+            {/* Nav links */}
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -155,6 +197,43 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
                 {link.label}
               </Link>
             ))}
+
+            {/* Mobile auth buttons */}
+            <div className="pt-2 border-t border-white/10 space-y-2">
+              {isLoggedIn ? (
+                <button
+                  id="navbar-mobile-sign-out"
+                  onClick={() => { closeMenu(); handleSignOut(); }}
+                  disabled={isSigningOut}
+                  role="menuitem"
+                  className="w-full text-left px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md text-brand-gold hover:bg-white/5 transition-colors duration-200 disabled:opacity-50"
+                >
+                  {isSigningOut ? "Signing out…" : "Sign Out"}
+                </button>
+              ) : (
+                <>
+                  <Link
+                    id="navbar-mobile-sign-in"
+                    href="/login"
+                    role="menuitem"
+                    onClick={closeMenu}
+                    className="block px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md text-brand-gold hover:bg-white/5 transition-colors duration-200"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    id="navbar-mobile-sign-up"
+                    href="/signup"
+                    role="menuitem"
+                    onClick={closeMenu}
+                    className="block px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md bg-brand-gold text-brand-primary hover:brightness-110 transition-all duration-200"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+
           </div>
         </div>
       )}
