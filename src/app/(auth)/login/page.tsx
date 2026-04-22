@@ -41,8 +41,10 @@ export default function LoginPage() {
     // current landing route — if we add a real dashboard later, the
     // redirect chain changes in one place.
     if (user.role === "admin") {
+      router.refresh();
       router.push("/admin");
     } else {
+      router.refresh();
       router.push("/shop");
     }
   };

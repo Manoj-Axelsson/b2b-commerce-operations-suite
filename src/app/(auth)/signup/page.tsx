@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { FormField } from "@/components/forms/FormField";
 
+
 export default function SignupPage() {
   const router = useRouter();
 
