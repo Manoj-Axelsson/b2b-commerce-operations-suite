@@ -2,7 +2,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth/better-auth";
+import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,7 +29,7 @@ export async function saveCustomer(formData: FormData) {
           name,
           email,
           role,
-          isRegistered: true, // Typically true if admin creates them
+          isApproved: true, // Typically true if admin creates them
           emailVerified: false,
         }
       });

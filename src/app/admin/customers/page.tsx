@@ -1,6 +1,6 @@
 //src/app/admin/customers/page.tsx
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth/better-auth";
+import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { saveCustomer } from "./actions";
 import Link from "next/link";
@@ -174,10 +174,9 @@ export default async function AdminCustomersPage({
                     ) : <span className="text-gray-400 italic">No history</span>}
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                      c.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 
-                      c.role === 'SHOP_KEEPER' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                    }`}>
+                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${c.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                        c.role === 'SHOP_KEEPER' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
                       {c.role || "CUSTOMER"}
                     </span>
                   </td>
