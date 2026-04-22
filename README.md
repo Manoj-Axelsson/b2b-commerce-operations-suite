@@ -124,10 +124,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Always import Prisma from the singleton — never instantiate `PrismaClient` directly:
 
 ```ts
-// ✅ Correct
+// Correct
 import prisma from "@/lib/prisma"
 
-// ❌ Never do this
+// Never do this
 import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 ```
@@ -143,10 +143,10 @@ Authentication uses **better-auth** via `src/lib/auth.ts`. Route protection is h
 Tailwind CSS v4 is configured via CSS `@theme`. Always write **mobile-first** layouts:
 
 ```html
-<!-- ✅ Correct — mobile first -->
+<!-- Correct — mobile first -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 
-<!-- ❌ Incorrect -->
+<!-- Incorrect -->
 <div class="grid grid-cols-4 sm:grid-cols-1">
 ```
 
@@ -167,7 +167,7 @@ Tailwind CSS v4 is configured via CSS `@theme`. Always write **mobile-first** la
 - Use `unknown` and narrow with type guards
 - Prefer `interface` for object shapes, `type` for unions
 
----
+
 
 ## Git Workflow
 
@@ -191,19 +191,19 @@ Tailwind CSS v4 is configured via CSS `@theme`. Always write **mobile-first** la
 Every PR must include:
 
 ```markdown
-## 📖 User Story
+## User Story
 As a [role], I want [feature] so that [benefit].
 
-## ✅ Acceptance Criteria
+## Acceptance Criteria
 - [ ] AC1: [Specific, testable condition]
 
-## 🔴 Edge Cases
+## Edge Cases
 - [ ] EC1: [Failure mode or boundary condition]
 
-## 🔗 Related Issue
+## Related Issue
 Closes #<issue-number>
 
-## 🧪 Testing
+## Testing
 - [ ] npm run lint passes
 - [ ] npm run build passes
 ```
@@ -214,7 +214,7 @@ Closes #<issue-number>
 
 CI runs automatically on every push and PR:
 
-```
+``` ts
 1. npm ci
 2. npm run lint
 3. npx prisma generate
