@@ -3,7 +3,7 @@ import { EB_Garamond } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/CartContext";
 import { GlobalCartButton } from "@/components/cart/GlobalCartButton";
-import Header from "@/components/layout/Header";
+import Navbar from "@/components/layout/Navbar";
 
 const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
@@ -26,7 +26,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     <html lang="en" className={`${ebGaramond.variable} antialiased`}>
       <body className="min-h-screen bg-background font-serif">
         <CartProvider>
-          <Header />
+          {/* Sticky navbar — above all pages per DX spec */}
+          <Navbar />
 
           <main>
             {children}
