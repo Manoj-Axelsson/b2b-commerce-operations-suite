@@ -1,26 +1,30 @@
 import Image from "next/image";
-import Header from "@/components/layout/Header";
 import Hero from "@/components/layout/Hero";
 
+// Landing page: light saffron background, centered logo above hero, no navbar.
+// The Navbar is suppressed on "/" via NavbarClient's pathname check.
 const Page = () => {
   return (
-    <main className="relative h-dvh w-full flex flex-col overflow-hidden">
-      <div className="fixed inset-0 -z-10 bg-white">
-        <Image
-          src="/background_picture.avif"
-          alt="Rajput Foods Heritage Background"
-          fill
-          sizes="100vw"
-          priority
-          className="object-cover opacity-10"
-        />
+    <div className="min-h-screen bg-brand-saffron flex flex-col items-center justify-center px-4">
+
+      {/* Logo — prominent and centered above the hero section */}
+      <div className="flex justify-center mb-6">
+        <div className="relative w-[clamp(160px,22vw,280px)]">
+          <Image
+            src="/refactored_logo.webp"
+            alt="Rajput Foods Logo"
+            width={720}
+            height={1280}
+            priority
+            className="w-full h-auto drop-shadow-md"
+          />
+        </div>
       </div>
 
-      <div className="relative z-20 flex flex-col flex-1 w-full">
-        <Header />
-        <Hero />
-      </div>
-    </main>
+      {/* Hero — tagline and Enter CTA */}
+      <Hero />
+
+    </div>
   );
 };
 

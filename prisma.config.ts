@@ -1,13 +1,13 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+// DX Convention: Fallback URL allows 'prisma generate' to run in CI 
+// without needing access to the real production/dev database.
+const DB_URL = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/rajput_dummy";
+
 export default defineConfig({
-  schema: "prisma/schema.prisma",
-  migrations: {
-    path: "prisma/migrations",
-    seed: "npx tsx prisma/seed.ts",
-  },
+  schema: "./prisma/schema.prisma",
   datasource: {
-    url: process.env.DATABASE_URL!,
+    url: DB_URL,
   },
 });

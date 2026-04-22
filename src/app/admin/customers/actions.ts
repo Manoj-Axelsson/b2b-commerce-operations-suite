@@ -26,7 +26,7 @@ export async function saveCustomer(formData: FormData) {
           name,
           email,
           role,
-          isApproved: true,
+          isApproved: true, // Typically true if admin creates them
           emailVerified: false,
         }
       });
