@@ -42,6 +42,9 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
 
+  // Landing page has its own branded layout — no navbar rendered there
+  if (pathname === "/") return null;
+
   const links = buildLinks(isLoggedIn, isAdmin);
 
   const closeMenu = () => setIsMenuOpen(false);
