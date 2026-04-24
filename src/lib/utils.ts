@@ -1,6 +1,11 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// The one and only admin email for this website.
+// Only this email address can access the /admin panel.
+// In production: set ADMIN_EMAIL in the server's environment variables.
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "rajputfoods@gmail.com";
+
 const DEFAULT_LOCALE = "sv-SE";
 const DEFAULT_CURRENCY = "SEK";
 
