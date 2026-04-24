@@ -30,3 +30,4 @@ export function sortProductsImagesFirst<T extends { imageUrl?: string | null; na
         return a.name.localeCompare(b.name, DEFAULT_LOCALE);
     });
 }
+
