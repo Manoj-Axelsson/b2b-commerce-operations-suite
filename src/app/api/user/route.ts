@@ -1,7 +1,10 @@
-// This endpoint extends the session with custom fields (role, isApproved) from Prisma
+// This endpoint extends the session with custom fields (role, isApproved) from Prisma.
+// The admin email is hardcoded — whoever logs in with that email is always treated as admin,
+// regardless of the role value stored in the database.
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { ADMIN_EMAIL } from "@/lib/utils";
 
 export async function GET(req: Request) {
   try {
@@ -31,7 +34,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(dbUser);
+    // The hardcoded admin email is always treated as admin.
+    // This overrides whatever role value is stored in the DB.
+    const role = dbUser.email === ADMIN_EMAIL ? "admin" : dbUser.role;
+
+    return NextResponse.json({ ...dbUser, role });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch user" },
