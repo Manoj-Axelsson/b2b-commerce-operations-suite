@@ -33,6 +33,9 @@ export function useCart(): CartState {
     }, []);
 
     useEffect(() => {
+        // syncCart is async — setState is only called after awaiting fetch(),
+        // never synchronously. The linter cannot detect this statically.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         syncCart();
     }, [syncCart]);
 
