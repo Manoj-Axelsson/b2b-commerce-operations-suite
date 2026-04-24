@@ -18,7 +18,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password");
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/two-factor");
 
   const isAdminPage = pathname.startsWith("/admin");
   const isUserPage = pathname.startsWith("/account");
@@ -49,5 +50,6 @@ export const config = {
     "/signup",
     "/forgot-password",
     "/reset-password",
+    "/two-factor",
   ],
 };

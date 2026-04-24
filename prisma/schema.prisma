@@ -30,6 +30,7 @@ model User {
   email          String
   emailVerified  Boolean         @default(false)
   image          String?
+  twoFactorEnabled Boolean         @default(false) // Required by Better Auth twoFactor() plugin
   role           String? // "user" (default) or "admin" — matches better-auth convention; set server-side only
   isApproved     Boolean         @default(false) // To hide/show prices
   createdAt      DateTime        @default(now())
@@ -175,6 +176,7 @@ model Product {
   @@index([name]) //name search filtering
   @@map("product")
 }
+
 
 // Stores the active cart for an authenticated user.
 // One cart per user — created on first add, cleared on order placement.
