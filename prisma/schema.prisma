@@ -25,23 +25,23 @@ enum OrderStatus {
 // Stores authenticated users from Better Auth.
 // Includes role and registration flag for pricing visibility.
 model User {
-  id             String          @id
-  name           String
-  email          String
-  emailVerified  Boolean         @default(false)
-  image          String?
+  id               String          @id
+  name             String
+  email            String
+  emailVerified    Boolean         @default(false)
+  image            String?
   twoFactorEnabled Boolean         @default(false) // Required by Better Auth twoFactor() plugin
-  role           String? // "user" (default) or "admin" — matches better-auth convention; set server-side only
-  isApproved     Boolean         @default(false) // To hide/show prices
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  sessions       Session[]
-  accounts       Account[]
-  stockMovements StockMovement[] // Track stock changes performed by this user
-  orders         Order[] // Orders placed by this user
-  wishlist       Wishlist[] // Wishlist items for this user
-  addresses      Address[] // Delivery addresses for this user
-  cart           Cart? // One active cart per user
+  role             String? // "user" (default) or "admin" — matches better-auth convention; set server-side only
+  isApproved       Boolean         @default(false) // To hide/show prices
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  sessions         Session[]
+  accounts         Account[]
+  stockMovements   StockMovement[] // Track stock changes performed by this user
+  orders           Order[] // Orders placed by this user
+  wishlist         Wishlist[] // Wishlist items for this user
+  addresses        Address[] // Delivery addresses for this user
+  cart             Cart? // One active cart per user
 
   @@unique([email])
   @@map("user")
@@ -164,8 +164,10 @@ model Product {
   stockMovements StockMovement[] // Track stock changes for this product
   cartItems      CartItem[] // Active cart items referencing this product
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  supplierId String?
 
   @@index([categoryId]) //category filtering
   @@index([brand]) //brand filtering
@@ -176,7 +178,6 @@ model Product {
   @@index([name]) //name search filtering
   @@map("product")
 }
-
 
 // Stores the active cart for an authenticated user.
 // One cart per user — created on first add, cleared on order placement.
@@ -348,4 +349,12 @@ model StockMovement {
 
   @@index([productId])
   @@map("stock_movement")
+}
+
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
 }
