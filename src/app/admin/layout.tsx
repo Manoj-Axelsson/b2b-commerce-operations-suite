@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { logout } from "@/lib/auth-actions";
+import { ADMIN_EMAIL } from "@/lib/utils";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({
@@ -14,14 +14,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true, email: true },
-  });
-
-  if (!user || user.role !== "admin") {
+  // Only the hardcoded admin email can access this panel.
+  // No database role check — email is the single source of truth.
+  if (session.user.email !== ADMIN_EMAIL) {
     redirect("/login");
   }
+
+  const user = { email: session.user.email };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -49,9 +48,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               {user.email}
             </p>
             <p className="text-[10px] text-yellow-600 uppercase tracking-wider">
-              {user.role}
+              Admin
             </p>
           </div>
+
+          <Link
+            href="/admin/two-factor-setup"
+            className="block p-2 text-xs text-yellow-700 hover:bg-yellow-100 rounded transition-colors mb-2"
+          >
+            🔐 Manage 2FA
+          </Link>
 
           <form action={logout}>
             <button
