@@ -1,12 +1,20 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { twoFactor } from "better-auth/plugins";
 import prisma from "./prisma";
 import { sendEmail } from "./mail";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
 
+  // Shown as the issuer label in Google Authenticator / Authy.
+  appName: "Rajput Foods Sweden",
+
   secret: process.env.BETTER_AUTH_SECRET!,
+
+  plugins: [
+    twoFactor(),
+  ],
 
   // role and isApproved are declared here so better-auth knows they exist
   // on the user model. input: false means the client CANNOT set these in
