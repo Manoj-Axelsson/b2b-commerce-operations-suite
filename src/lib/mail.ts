@@ -34,9 +34,11 @@ export const sendEmail = async ({ to, subject, html }: SendEmailOptions): Promis
         });
     } catch (error) {
         console.error(
-            `[${new Date().toLocaleString("sv-SE")}] Email delivery failed:`,
+            `[${new Date().toLocaleString("sv-SE")}] Email delivery failed to ${to}:`,
             error
         );
-        throw error;
+        // We do NOT throw here because we don't want a failed email delivery
+        // (e.g. to a fictional test email) to crash the entire user registration
+        // or admin creation flow.
     }
 };

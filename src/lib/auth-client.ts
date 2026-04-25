@@ -9,4 +9,10 @@ export const authClient = createAuthClient({
       twoFactorPage: "/two-factor",
     }),
   ],
+  user: {
+    additionalFields: {
+      role: { type: "string" },
+      isApproved: { type: "boolean" },
+    }
+  }
 });

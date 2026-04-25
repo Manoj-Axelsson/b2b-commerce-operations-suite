@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,6 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
 
   // Landing page has its own branded layout — no navbar rendered there
   if (pathname === "/") return null;
@@ -52,10 +51,16 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
   const closeMenu = () => setIsMenuOpen(false);
 
   const handleSignOut = async () => {
-    setIsSigningOut(true);
-    await authClient.signOut();
-    router.push("/");
-    router.refresh();
+    try {
+      setIsSigningOut(true);
+      await authClient.signOut();
+      // Use window.location for a full page reload to ensure 
+      // all auth states are fully cleared across the app.
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      setIsSigningOut(false);
+    }
   };
 
   return (
