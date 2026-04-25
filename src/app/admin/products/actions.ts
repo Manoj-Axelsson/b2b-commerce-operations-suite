@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ADMIN_EMAIL } from "@/lib/utils";
-import { AdminProductUpdateSchema } from "../inventory/types/schema";
+import { AdminProductUpdateSchema } from "@/app/admin/inventory/types/schema";
 
 /**
  * verifyAdmin
