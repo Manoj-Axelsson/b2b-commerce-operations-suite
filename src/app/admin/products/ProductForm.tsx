@@ -20,6 +20,9 @@ interface ProductFormProps {
     quantity: number;
     minQuantity: number;
     categoryId: string;
+    discountPrice?: number | null;
+    discountStart?: Date | null;
+    discountEnd?: Date | null;
   };
 }
 
@@ -170,9 +173,56 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-yellow-400 outline-none"
               placeholder="e.g. 24900 = 249.00 kr"
             />
-            <p className="text-[10px] text-gray-400">100 öre = 1 kr. Enter 24900 for 249.00 kr.</p>
+            <p className="text-[10px] text-gray-400">100 öre = 1 kr.</p>
           </div>
 
+        </div>
+
+        <div className="pt-4 border-t border-dashed border-gray-100">
+          <h3 className="text-xs font-bold text-blue-600 uppercase mb-3">Promotions & Discounts</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="discountPrice" className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                Discount Price (öre)
+              </label>
+              <input
+                id="discountPrice"
+                name="discountPrice"
+                type="number"
+                min={0}
+                defaultValue={product?.discountPrice ?? ""}
+                className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-400 outline-none"
+                placeholder="Must be < Regular Price"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="discountStart" className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                Discount Start
+              </label>
+              <input
+                id="discountStart"
+                name="discountStart"
+                type="date"
+                defaultValue={product?.discountStart ? new Date(product.discountStart).toISOString().split('T')[0] : ""}
+                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="discountEnd" className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                Discount End
+              </label>
+              <input
+                id="discountEnd"
+                name="discountEnd"
+                type="date"
+                defaultValue={product?.discountEnd ? new Date(product.discountEnd).toISOString().split('T')[0] : ""}
+                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+              />
+            </div>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2 italic">Note: End date must be in the future and after Start date.</p>
         </div>
       </section>
 

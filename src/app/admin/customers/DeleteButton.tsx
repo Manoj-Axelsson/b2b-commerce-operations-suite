@@ -2,10 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import { deleteCustomer } from "./actions"; 
+import { useRouter } from "next/navigation";
+import { deleteCustomer } from "./actions";
 
 export function DeleteButton({ id }: { id: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const handleDelete = async () => {
     // 1. Confirm with the user
@@ -13,8 +15,10 @@ export function DeleteButton({ id }: { id: string }) {
 
     setIsDeleting(true);
     try {
-      // ✅ FIX: Pass the ID string directly, NOT a FormData object
       await deleteCustomer(id);
+      // revalidatePath marks the cache stale, but the UI won't update
+      // until router.refresh() forces the server component to re-render.
+      router.refresh();
     } catch (error) {
       console.error("Kunde inte radera:", error);
       alert("Något gick fel vid radering.");
