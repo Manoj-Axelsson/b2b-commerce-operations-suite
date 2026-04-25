@@ -11,9 +11,10 @@ export const dynamic = "force-dynamic";
 // isActive: true  — only show products enabled by admin
 // isDeleted: false — exclude soft-deleted products
 const ShopPage = async () => {
-    // Check session server-side — no client-side auth needed here
+    // Check session server-side
     const session = await auth.api.getSession({ headers: await headers() });
     const isLoggedIn = session?.user != null;
+    const isApproved = (session?.user as { isApproved?: boolean })?.isApproved === true;
 
     const rawProducts = await prisma.product.findMany({
         where: {
@@ -49,6 +50,7 @@ const ShopPage = async () => {
                     products={products}
                     categoryName="Our Shop"
                     isLoggedIn={isLoggedIn}
+                    isApproved={isApproved}
                 />
             </div>
         </main>
