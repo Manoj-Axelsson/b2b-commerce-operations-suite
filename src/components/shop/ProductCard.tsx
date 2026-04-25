@@ -4,7 +4,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 
-export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps) => {
+export const ProductCard = ({ product, priority, isLoggedIn, isApproved }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
     const isDiscounted = product.discountPrice != null && product.price != null && product.discountPrice < product.price;
 
@@ -70,23 +70,28 @@ export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps)
 
                     <div className="mt-auto pt-2 border-t border-brand-border/40 min-h-8">
                         {isLoggedIn ? (
-                            // Prices are only visible to logged-in customers
-                            isDiscounted && product.discountPrice ? (
-                                <>
-                                    <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
-                                        {formatCurrency(product.discountPrice)}
-                                    </span>
-                                    <span className="text-muted-foreground line-through text-xs ml-2">
+                            isApproved ? (
+                                // Prices only shown to approved users
+                                isDiscounted && product.discountPrice ? (
+                                    <>
+                                        <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
+                                            {formatCurrency(product.discountPrice)}
+                                        </span>
+                                        <span className="text-muted-foreground line-through text-xs ml-2">
+                                            {formatCurrency(product.price)}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
                                         {formatCurrency(product.price)}
                                     </span>
-                                </>
+                                )
                             ) : (
-                                <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
-                                    {formatCurrency(product.price)}
+                                <span className="text-muted-foreground text-sm italic">
+                                    Pending admin approval
                                 </span>
                             )
                         ) : (
-                            // Guests see a prompt to sign in instead of the price
                             <span className="text-muted-foreground text-sm italic">
                                 Sign in to view price
                             </span>
@@ -97,7 +102,16 @@ export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps)
 
             <div className="px-4 pb-4 sm:px-5 sm:pb-5">
                 {isLoggedIn ? (
-                    <AddToCartButton product={product} className="w-full" />
+                    isApproved ? (
+                        <AddToCartButton product={product} className="w-full" />
+                    ) : (
+                        <button
+                            disabled
+                            className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                        >
+                            Awaiting Approval
+                        </button>
+                    )
                 ) : (
                     <Link
                         href="/login"

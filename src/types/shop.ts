@@ -19,6 +19,7 @@ export interface ProductCardProps {
     product: Product;
     priority?: boolean;
     isLoggedIn: boolean;
+    isApproved?: boolean;
 }
 
 export interface ProductGridProps {
@@ -26,4 +27,5 @@ export interface ProductGridProps {
     categoryName?: string;
     isEmpty?: boolean;
     isLoggedIn: boolean;
+    isApproved?: boolean;
 }
