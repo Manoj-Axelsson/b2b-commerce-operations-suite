@@ -34,12 +34,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // The hardcoded admin email is always treated as admin.
-    // This overrides whatever role value is stored in the DB.
-    const role = dbUser.email === ADMIN_EMAIL ? "admin" : dbUser.role;
+    // A user is treated as an admin if they have the primary admin email
+    // OR if their database role is explicitly set to "admin".
+    const role = (dbUser.email === ADMIN_EMAIL || dbUser.role === "admin") ? "admin" : "user";
 
     return NextResponse.json({ ...dbUser, role });
-  } catch {
+  } catch (err) {
+    console.error("USER_API_ERROR:", err);
     return NextResponse.json(
       { error: "Failed to fetch user" },
       { status: 500 },

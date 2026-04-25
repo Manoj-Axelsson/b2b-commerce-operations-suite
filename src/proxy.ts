@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip all API routes, Next.js internals, and static files.
@@ -33,9 +33,26 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Prevent logged-in users from accessing auth pages
-  if (sessionToken && isAuthPage) {
+  // Prevent logged-in users from accessing auth pages (login, signup, etc.)
+  // EXCEPTION: /two-factor MUST be accessible even with a session token,
+  // as it is part of the login completion flow.
+  if (sessionToken && isAuthPage && !pathname.startsWith("/two-factor")) {
     return NextResponse.redirect(new URL("/account", request.url));
+  }
+
+  // Protected Admin routes
+  if (pathname.startsWith("/admin")) {
+    // We fetch the session to check the role. 
+    // The ADMIN_EMAIL is also checked as a fallback for the primary account.
+    const res = await fetch(`${request.nextUrl.origin}/api/auth/get-session`, {
+      headers: { cookie: request.headers.get("cookie") || "" },
+    });
+    const session = await res.json();
+
+    const isAdmin = session?.user?.email === "rajputfoods@gmail.com" || session?.user?.role === "admin";
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/account", request.url));
+    }
   }
 
   return NextResponse.next();
@@ -53,3 +70,5 @@ export const config = {
     "/two-factor",
   ],
 };
+
+export default proxy;

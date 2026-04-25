@@ -14,10 +14,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login");
   }
 
-  // Only the hardcoded admin email can access this panel.
-  // No database role check — email is the single source of truth.
-  if (session.user.email !== ADMIN_EMAIL) {
-    redirect("/login");
+  // A user is treated as an admin if they have the primary admin email
+  // OR if their database role is explicitly set to "admin".
+  const isAdmin = session.user.email === ADMIN_EMAIL || (session.user as { role?: string }).role === "admin";
+  if (!isAdmin) {
+    redirect("/account");
   }
 
   const user = { email: session.user.email };
