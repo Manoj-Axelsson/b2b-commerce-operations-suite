@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import ProductGallery from "./components/ProductGallery";
 import AddToCartAction from "./components/AddToCartAction";
@@ -10,6 +12,10 @@ interface ProductPageProps {
 
 const ProductDetailPage = async ({ params }: ProductPageProps) => {
     const { id } = await params;
+    const session = await auth.api.getSession({ headers: await headers() });
+    const isLoggedIn = !!session;
+    const isApproved = session?.user?.isApproved === true;
+
     const product = await prisma.product.findUnique({
         where: { id },
     });
@@ -69,6 +75,8 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
                         basePrice={product.price}
                         discountPrice={product.discountPrice}
                         quantity={product.quantity}
+                        isLoggedIn={isLoggedIn}
+                        isApproved={isApproved}
                     />
 
                     <div className="mt-8 sm:mt-10 border-t border-brand-border pt-4 sm:pt-6">

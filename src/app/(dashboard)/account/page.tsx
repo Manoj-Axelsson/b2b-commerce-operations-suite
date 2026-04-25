@@ -35,6 +35,7 @@ export default function AccountPage() {
         }
 
         const userData = await res.json();
+        console.log("DEBUG: Account User Data:", userData);
 
         // Redirect admins to the admin area. Using /admin (not
         // /admin/dashboard, which does not exist) lets the admin root

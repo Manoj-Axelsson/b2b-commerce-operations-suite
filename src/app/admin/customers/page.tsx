@@ -23,7 +23,8 @@ export default async function AdminCustomersPage({
     headers: await headers(),
   });
 
-  if (!session || session.user.email !== ADMIN_EMAIL) {
+  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
+  if (!session || !isAdmin) {
     redirect("/login");
   }
 
@@ -101,17 +102,34 @@ export default async function AdminCustomersPage({
               <label className="text-[10px] font-bold text-blue-700 uppercase">Email</label>
               <input name="email" type="email" defaultValue={editingCustomer?.email || ""} className="border p-2 rounded bg-white" required />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-blue-700 uppercase italic">Last Address</label>
-              <input value={currentAddress || "No orders"} className="border p-2 rounded bg-gray-50 text-gray-400" disabled />
-            </div>
+            {/* Last Address is read-only — derived from order history.
+                Only shown when editing; a brand new user has no orders yet. */}
+            {editingCustomer && (
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-blue-700 uppercase italic">Last Address</label>
+                <input value={currentAddress || "No orders"} className="border p-2 rounded bg-gray-50 text-gray-400" disabled />
+              </div>
+            )}
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold text-blue-700 uppercase">Role</label>
-              <select name="role" defaultValue={editingCustomer?.role || "CUSTOMER"} className="border p-2 rounded bg-white">
-                <option value="CUSTOMER">CUSTOMER</option>
-                <option value="ADMIN">ADMIN</option>
+              <select name="role" defaultValue={editingCustomer?.role || "user"} className="border p-2 rounded bg-white">
+                <option value="user">user</option>
+                <option value="admin">admin</option>
               </select>
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-blue-700 uppercase">Approval Status</label>
+              <select name="isApproved" defaultValue={editingCustomer?.isApproved ? "true" : "false"} className="border p-2 rounded bg-white font-bold">
+                <option value="true" className="text-green-600 font-bold">Approved (Access granted)</option>
+                <option value="false" className="text-red-600 font-bold">Pending (Prices hidden)</option>
+              </select>
+            </div>
+            {isCreating && (
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-blue-700 uppercase">Initial Password</label>
+                <input name="password" type="password" className="border p-2 rounded bg-white" required={isCreating} placeholder="At least 8 chars" />
+              </div>
+            )}
             <div className="lg:col-span-4 flex gap-2 pt-2 border-t border-blue-100">
               <button type="submit" className="bg-green-600 text-white px-8 py-2 rounded hover:bg-green-700 font-bold">Save</button>
               <Link href="/admin/customers" className="bg-white border border-gray-300 text-gray-600 px-8 py-2 rounded">Cancel</Link>
@@ -127,6 +145,7 @@ export default async function AdminCustomersPage({
               <th className="p-4">Customer</th>
               <th className="p-4">Addresses</th>
               <th className="p-4">Role</th>
+              <th className="p-4">Status</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -147,11 +166,18 @@ export default async function AdminCustomersPage({
                     ) : <span className="text-gray-400 italic">No history</span>}
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${c.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
-                      c.role === 'SHOP_KEEPER' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                      {c.role || "CUSTOMER"}
+                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${
+                      c.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {c.role || "user"}
                     </span>
+                  </td>
+                  <td className="p-4">
+                    {c.isApproved ? (
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase">Approved</span>
+                    ) : (
+                      <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-red-200">Pending</span>
+                    )}
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end items-center gap-4 font-bold">

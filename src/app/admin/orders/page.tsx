@@ -26,7 +26,8 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 export default async function AdminOrdersPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session || session.user.email !== ADMIN_EMAIL) {
+  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
+  if (!session || !isAdmin) {
     redirect("/login");
   }
 
