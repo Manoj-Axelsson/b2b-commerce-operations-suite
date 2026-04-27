@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
     });
     const session = await res.json();
 
-    const isAdmin = session?.user?.email === "rajputfoods@gmail.com" || session?.user?.role === "admin";
+    const isAdmin = session?.user?.email === "[EMAIL_ADDRESS]" || session?.user?.role === "admin";
     if (!isAdmin) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
