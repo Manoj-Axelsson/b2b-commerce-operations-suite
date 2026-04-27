@@ -18,12 +18,14 @@ export interface Product {
 export interface ProductCardProps {
     product: Product;
     priority?: boolean;
-    isLoggedIn: boolean;
+    // True only when the user is logged in AND has been approved by an admin.
+    // Controls price visibility and cart access.
+    isApproved: boolean;
 }
 
 export interface ProductGridProps {
     products: Product[];
     categoryName?: string;
     isEmpty?: boolean;
-    isLoggedIn: boolean;
+    isApproved: boolean;
 }
