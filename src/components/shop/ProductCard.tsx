@@ -4,7 +4,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 
-export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps) => {
+export const ProductCard = ({ product, priority, isApproved }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
     const isDiscounted = product.discountPrice != null && product.price != null && product.discountPrice < product.price;
 
@@ -16,8 +16,8 @@ export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps)
                 !isInStock && "opacity-90 grayscale-[0.3]",
             )}
         >
-            {/* Special Offer badge — only shown to logged-in users since it references pricing */}
-            {isDiscounted && isLoggedIn && (
+            {/* Special Offer badge — only shown to approved users since it references pricing */}
+            {isDiscounted && isApproved && (
                 <div className="absolute top-3 left-3 z-10 bg-brand-gold-dark text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md sm:top-4 sm:left-4">
                     Special Offer
                 </div>
@@ -69,8 +69,8 @@ export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps)
                     </p>
 
                     <div className="mt-auto pt-2 border-t border-brand-border/40 min-h-8">
-                        {isLoggedIn ? (
-                            // Prices are only visible to logged-in customers
+                        {isApproved ? (
+                            // Prices are only visible to approved customers
                             isDiscounted && product.discountPrice ? (
                                 <>
                                     <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
@@ -86,7 +86,7 @@ export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps)
                                 </span>
                             )
                         ) : (
-                            // Guests see a prompt to sign in instead of the price
+                            // Guests and unapproved users see a prompt instead of the price
                             <span className="text-muted-foreground text-sm italic">
                                 Sign in to view price
                             </span>
@@ -96,7 +96,7 @@ export const ProductCard = ({ product, priority, isLoggedIn }: ProductCardProps)
             </Link>
 
             <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-                {isLoggedIn ? (
+                {isApproved ? (
                     <AddToCartButton product={product} className="w-full" />
                 ) : (
                     <Link
