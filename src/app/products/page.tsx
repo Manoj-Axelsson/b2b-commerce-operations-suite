@@ -15,7 +15,18 @@ export const dynamic = "force-dynamic";
 const ProductsPage = async () => {
     // Check session server-side so price gating is consistent with /shop
     const session = await auth.api.getSession({ headers: await headers() });
-    const isLoggedIn = session?.user != null;
+
+    // Determine if this user is approved.
+    // Unauthenticated visitors and unapproved registrants both get isApproved = false.
+    let isApproved = false;
+
+    if (session?.user?.id) {
+        const dbUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { isApproved: true },
+        });
+        isApproved = dbUser?.isApproved ?? false;
+    }
     const rawProducts = await prisma.product.findMany({
         where: {
             isActive: true,
@@ -49,7 +60,7 @@ const ProductsPage = async () => {
                 <ProductGrid
                     products={products}
                     categoryName="All Products"
-                    isLoggedIn={isLoggedIn}
+                    isApproved={isApproved}
                 />
             </div>
         </main>

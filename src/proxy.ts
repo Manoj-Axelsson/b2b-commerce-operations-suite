@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { ADMIN_EMAIL } from "@/lib/utils";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -49,7 +50,7 @@ export async function proxy(request: NextRequest) {
     });
     const session = await res.json();
 
-    const isAdmin = session?.user?.email === "rajputfoods@gmail.com" || session?.user?.role === "admin";
+    const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
     if (!isAdmin) {
       return NextResponse.redirect(new URL("/account", request.url));
     }

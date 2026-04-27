@@ -11,10 +11,20 @@ export const dynamic = "force-dynamic";
 // isActive: true  — only show products enabled by admin
 // isDeleted: false — exclude soft-deleted products
 const ShopPage = async () => {
-    // Check session server-side
+    // Check session server-side — no client-side auth needed here
     const session = await auth.api.getSession({ headers: await headers() });
-    const isLoggedIn = session?.user != null;
-    const isApproved = (session?.user as { isApproved?: boolean })?.isApproved === true;
+
+    // Determine if this user is approved.
+    // Unauthenticated visitors and unapproved registrants both get isApproved = false.
+    let isApproved = false;
+
+    if (session?.user?.id) {
+        const dbUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { isApproved: true },
+        });
+        isApproved = dbUser?.isApproved ?? false;
+    }
 
     const rawProducts = await prisma.product.findMany({
         where: {
@@ -49,7 +59,6 @@ const ShopPage = async () => {
                 <ProductGrid
                     products={products}
                     categoryName="Our Shop"
-                    isLoggedIn={isLoggedIn}
                     isApproved={isApproved}
                 />
             </div>

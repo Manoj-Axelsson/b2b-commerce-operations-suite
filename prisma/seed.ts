@@ -1,6 +1,5 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
 import "dotenv/config";
 
 const connectionString = process.env.DATABASE_URL;
@@ -9,9 +8,7 @@ if (!connectionString) {
     throw new Error("DATABASE_URL is not defined in environment variables");
 }
 
-const pool = new pg.Pool({ connectionString });
-
-const adapter = new PrismaPg(pool as any);
+const adapter = new PrismaPg({ connectionString });
 
 const prisma = new PrismaClient({ adapter });
 
@@ -19,21 +16,23 @@ async function main() {
     console.log("Starting database seeding...");
 
     await prisma.product.upsert({
-        where: { articleNo: "DEFAULT-001" },
-        update: {},
+        where: { articleNo: "Atta - 001" },
+        update: {
+            imageUrl: "/Elephant Atta Medium 10kg.jpg",
+        },
         create: {
-            articleNo: "DEFAULT-001",
-            brand: "Rajput Foods",
-            name: "Classic Basmati Rice",
-            description: "Premium long-grain aromatic rice.",
-            price: 24900,
-            weightValue: 5,
+            articleNo: "Atta - 001",
+            brand: "Elephant",
+            name: "Elephant Atta Medium 10kg",
+            description: "Elephant Atta Medium 10kg is a high-quality whole wheat flour perfect for making soft and fluffy rotis, chapatis, and naans. Made from the finest wheat grains, it ensures authentic taste and texture in every bite.",
+            price: 14900,
+            weightValue: 10,
             weightUnit: "kg",
-            imageUrl: "/images/products/basmati.jpg",
+            imageUrl: "/Elephant Atta Medium 10kg.jpg",
             category: {
                 connectOrCreate: {
-                    where: { name: "Rice & Grains" },
-                    create: { name: "Rice & Grains" },
+                    where: { name: "Wheat & Flour" },
+                    create: { name: "Wheat & Flour" },
                 },
             },
             quantity: 50,
@@ -50,5 +49,5 @@ main()
     })
     .finally(async () => {
         await prisma.$disconnect();
-        await pool.end();
     });
+

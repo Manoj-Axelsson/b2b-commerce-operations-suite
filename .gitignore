@@ -31,3 +31,6 @@ next-env.d.ts
 # OS files
 .DS_Store
 *.pem
+
+# Local scratch and planning files (developer notes — not part of the codebase)
+singleton_implementation_plan.md

@@ -4,7 +4,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 
-export const ProductCard = ({ product, priority, isLoggedIn, isApproved }: ProductCardProps) => {
+export const ProductCard = ({ product, priority, isApproved }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
     const isDiscounted = product.discountPrice != null && product.price != null && product.discountPrice < product.price;
 
@@ -16,8 +16,8 @@ export const ProductCard = ({ product, priority, isLoggedIn, isApproved }: Produ
                 !isInStock && "opacity-90 grayscale-[0.3]",
             )}
         >
-            {/* Special Offer badge — only shown to logged-in users since it references pricing */}
-            {isDiscounted && isLoggedIn && (
+            {/* Special Offer badge — only shown to approved users since it references pricing */}
+            {isDiscounted && isApproved && (
                 <div className="absolute top-3 left-3 z-10 bg-brand-gold-dark text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md sm:top-4 sm:left-4">
                     Special Offer
                 </div>
@@ -69,29 +69,24 @@ export const ProductCard = ({ product, priority, isLoggedIn, isApproved }: Produ
                     </p>
 
                     <div className="mt-auto pt-2 border-t border-brand-border/40 min-h-8">
-                        {isLoggedIn ? (
-                            isApproved ? (
-                                // Prices only shown to approved users
-                                isDiscounted && product.discountPrice ? (
-                                    <>
-                                        <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
-                                            {formatCurrency(product.discountPrice)}
-                                        </span>
-                                        <span className="text-muted-foreground line-through text-xs ml-2">
-                                            {formatCurrency(product.price)}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
+                        {isApproved ? (
+                            // Prices are only visible to approved customers
+                            isDiscounted && product.discountPrice ? (
+                                <>
+                                    <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
+                                        {formatCurrency(product.discountPrice)}
+                                    </span>
+                                    <span className="text-muted-foreground line-through text-xs ml-2">
                                         {formatCurrency(product.price)}
                                     </span>
-                                )
+                                </>
                             ) : (
-                                <span className="text-muted-foreground text-sm italic">
-                                    Pending admin approval
+                                <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
+                                    {formatCurrency(product.price)}
                                 </span>
                             )
                         ) : (
+                            // Guests and unapproved users see a prompt instead of the price
                             <span className="text-muted-foreground text-sm italic">
                                 Sign in to view price
                             </span>
@@ -101,17 +96,8 @@ export const ProductCard = ({ product, priority, isLoggedIn, isApproved }: Produ
             </Link>
 
             <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-                {isLoggedIn ? (
-                    isApproved ? (
-                        <AddToCartButton product={product} className="w-full" />
-                    ) : (
-                        <button
-                            disabled
-                            className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
-                        >
-                            Awaiting Approval
-                        </button>
-                    )
+                {isApproved ? (
+                    <AddToCartButton product={product} className="w-full" />
                 ) : (
                     <Link
                         href="/login"
