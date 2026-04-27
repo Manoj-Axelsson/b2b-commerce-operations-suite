@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import ProductGallery from "./components/ProductGallery";
 import AddToCartAction from "./components/AddToCartAction";
 
@@ -10,12 +12,26 @@ interface ProductPageProps {
 
 const ProductDetailPage = async ({ params }: ProductPageProps) => {
     const { id } = await params;
+
     const product = await prisma.product.findUnique({
         where: { id },
     });
 
     if (!product) {
         notFound();
+    }
+
+    // Determine if the current user is approved to see prices and add to cart
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    let isApproved = false;
+
+    if (session?.user?.id) {
+        const dbUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { isApproved: true },
+        });
+        isApproved = dbUser?.isApproved ?? false;
     }
 
     return (
@@ -69,6 +85,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
                         basePrice={product.price}
                         discountPrice={product.discountPrice}
                         quantity={product.quantity}
+                        isApproved={isApproved}
                     />
 
                     <div className="mt-8 sm:mt-10 border-t border-brand-border pt-4 sm:pt-6">
