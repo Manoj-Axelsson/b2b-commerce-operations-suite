@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { FormField } from "@/components/forms/FormField";
@@ -33,8 +34,8 @@ export default function SignupPage() {
       return;
     }
 
-    setSuccess("Verification email sent. Please check your inbox.");
-    router.push("/login");
+    setSuccess("Account created successfully! Redirecting to login...");
+    setTimeout(() => router.push("/login"), 2000);
   };
 
   return (
@@ -67,6 +68,21 @@ export default function SignupPage() {
         />
 
         {success && <p className="text-green-600 text-sm text-center">{success}</p>}
+
+        <div className="flex flex-col gap-2 pt-4 border-t border-gray-100 mt-4">
+          <p className="text-sm text-center text-gray-600">
+            Already have an account?{" "}
+            <Link href="/login" className="text-yellow-700 font-bold hover:underline">
+              Login
+            </Link>
+          </p>
+          <Link
+            href="/forgot-password"
+            className="text-xs text-center text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </AuthForm>
     </div>
   );

@@ -19,7 +19,7 @@ export const GlobalCartButton = () => {
         pathname.startsWith("/register")
     ) return null;
 
-    if (isPending || !session?.user) return null;
+    if (isPending || !session?.user || (session.user as { isApproved?: boolean }).isApproved !== true) return null;
 
     return (
         <>
