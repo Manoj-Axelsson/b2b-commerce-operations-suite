@@ -12,6 +12,16 @@ export async function POST(request: NextRequest) {
             return new Response("Unauthorized", { status: 401 });
         }
 
+        // Only approved users can access the cart
+        const dbUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { isApproved: true },
+        });
+
+        if (!dbUser?.isApproved) {
+            return new Response("Forbidden: account pending approval", { status: 403 });
+        }
+
         const userId = session.user.id;
         const body = await request.json();
         const productId = body.productId as string;
