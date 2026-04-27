@@ -8,13 +8,16 @@ interface AddToCartActionProps {
     basePrice: number;
     discountPrice?: number | null;
     quantity: number;
+    // True only when the user is logged in AND has been approved by an admin.
+    isApproved: boolean;
 }
 
 const AddToCartAction = ({
     productId: _productId,
     basePrice,
     discountPrice,
-    quantity
+    quantity,
+    isApproved,
 }: AddToCartActionProps) => {
     const [isAdding, setIsAdding] = useState(false);
     const isInStock = quantity > 0;
@@ -27,6 +30,17 @@ const AddToCartAction = ({
         // TODO(#7): Replace with actual cart logic
         setTimeout(() => setIsAdding(false), 800);
     };
+
+    // Non-approved users (guests or pending approval) cannot see price or add to cart
+    if (!isApproved) {
+        return (
+            <div className="flex flex-col gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-brand-border">
+                <p className="text-sm text-muted-foreground italic">
+                    Your account is pending approval. Pricing and ordering will be available once an admin approves your account.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-brand-border">
