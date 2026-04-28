@@ -24,6 +24,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
     // Determine if the current user is approved to see prices and add to cart
     const session = await auth.api.getSession({ headers: await headers() });
 
+    const isLoggedIn = !!session?.user;
     let isApproved = false;
 
     if (session?.user?.id) {
@@ -86,6 +87,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
                         discountPrice={product.discountPrice}
                         quantity={product.quantity}
                         isApproved={isApproved}
+                        isLoggedIn={isLoggedIn}
                     />
 
                     <div className="mt-8 sm:mt-10 border-t border-brand-border pt-4 sm:pt-6">

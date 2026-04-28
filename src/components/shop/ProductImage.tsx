@@ -28,6 +28,7 @@ export const ProductImage = ({ imageUrl, name, priority }: ProductImageProps) =>
             src={imageUrl}
             alt={name}
             fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="object-contain p-6 group-hover:scale-110 transition-transform duration-700"
             priority={priority}
             onError={() => setHasError(true)}
