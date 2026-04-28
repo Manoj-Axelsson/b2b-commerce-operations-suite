@@ -88,7 +88,7 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                         ) : (
                             // Guests and unapproved users see a prompt instead of the price
                             <span className="text-muted-foreground text-sm italic">
-                                Sign in to view price
+                                Log in to view price
                             </span>
                         )}
                     </div>
@@ -103,7 +103,7 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                         href="/login"
                         className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-brand-border text-brand-primary hover:bg-brand-cream border border-brand-border/60"
                     >
-                        Sign in to order
+                        Log in to order
                     </Link>
                 )}
             </div>

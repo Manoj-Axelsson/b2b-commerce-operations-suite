@@ -120,18 +120,18 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
             ) : (
               <div className="flex items-center gap-3">
                 <Link
-                  id="navbar-sign-in"
+                  id="navbar-log-in"
                   href="/login"
                   className="text-sm font-medium tracking-widest uppercase px-4 py-1.5 rounded-full border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-primary transition-all duration-200"
                 >
-                  Sign In
+                  Log In
                 </Link>
                 <Link
-                  id="navbar-sign-up"
+                  id="navbar-register"
                   href="/signup"
                   className="text-sm font-medium tracking-widest uppercase px-4 py-1.5 rounded-full bg-brand-gold text-brand-primary hover:brightness-110 transition-all duration-200"
                 >
-                  Sign Up
+                  Register
                 </Link>
               </div>
             )}
@@ -218,22 +218,22 @@ export function NavbarClient({ isAdmin, isLoggedIn }: NavbarClientProps) {
               ) : (
                 <>
                   <Link
-                    id="navbar-mobile-sign-in"
+                    id="navbar-mobile-log-in"
                     href="/login"
                     role="menuitem"
                     onClick={closeMenu}
                     className="block px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md text-brand-gold hover:bg-white/5 transition-colors duration-200"
                   >
-                    Sign In
+                    Log In
                   </Link>
                   <Link
-                    id="navbar-mobile-sign-up"
+                    id="navbar-mobile-register"
                     href="/signup"
                     role="menuitem"
                     onClick={closeMenu}
                     className="block px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md bg-brand-gold text-brand-primary hover:brightness-110 transition-all duration-200"
                   >
-                    Sign Up
+                    Register
                   </Link>
                 </>
               )}
