@@ -19,6 +19,7 @@ async function main() {
         where: { articleNo: "Atta - 001" },
         update: {
             imageUrl: "/Elephant Atta Medium 10kg.jpg",
+            images: ["/Elephant Atta Medium 10kg.jpg"],
         },
         create: {
             articleNo: "Atta - 001",
@@ -29,6 +30,7 @@ async function main() {
             weightValue: 10,
             weightUnit: "kg",
             imageUrl: "/Elephant Atta Medium 10kg.jpg",
+            images: ["/Elephant Atta Medium 10kg.jpg"],
             category: {
                 connectOrCreate: {
                     where: { name: "Wheat & Flour" },
