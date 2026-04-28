@@ -40,8 +40,8 @@ export default function SignupPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <AuthForm onSubmit={handleSubmit} submitLabel="Create account" error={error}>
-        <h1 className="text-xl font-bold text-center">Sign Up</h1>
+      <AuthForm onSubmit={handleSubmit} submitLabel="Register" error={error}>
+        <h1 className="text-xl font-bold text-center">Register</h1>
 
         <FormField
           label="Name"
@@ -73,7 +73,7 @@ export default function SignupPage() {
           <p className="text-sm text-center text-gray-600">
             Already have an account?{" "}
             <Link href="/login" className="text-yellow-700 font-bold hover:underline">
-              Login
+              Log In
             </Link>
           </p>
           <Link

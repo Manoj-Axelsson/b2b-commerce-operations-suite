@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { FormField } from "@/components/forms/FormField";
@@ -31,6 +32,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthForm onSubmit={handleSubmit} submitLabel="Send Reset Link" error={error}>
+      <h1 className="text-xl font-bold text-center">Forgot Password</h1>
+      <p className="text-sm text-center text-gray-500">
+        Enter your email and we&apos;ll send you a reset link.
+      </p>
       <FormField
         label="Email"
         type="email"
@@ -38,7 +43,15 @@ export default function ForgotPasswordPage() {
         onChange={setEmail}
         required
       />
-      {message && <p className="text-sm text-green-700">{message}</p>}
+      {message && <p className="text-sm text-green-700 text-center">{message}</p>}
+      <div className="pt-2 border-t border-gray-100">
+        <Link
+          href="/login"
+          className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-yellow-700 transition-colors"
+        >
+          <span aria-hidden="true">&larr;</span> Back to Log In
+        </Link>
+      </div>
     </AuthForm>
   );
 }
