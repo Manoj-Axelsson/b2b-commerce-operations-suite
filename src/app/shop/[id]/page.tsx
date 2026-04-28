@@ -38,13 +38,13 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
         <main className="max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
             <div className="mb-6 sm:mb-8">
                 <Link
-                    href="/products"
+                    href="/shop"
                     className="group inline-flex items-center text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-brand-gold-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold-dark rounded-sm"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                     </svg>
-                    Back to Catalog
+                    Back to Shop
                 </Link>
             </div>
 
