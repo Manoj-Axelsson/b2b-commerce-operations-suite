@@ -12,9 +12,9 @@ export function useCart(): CartState {
         try {
             const res = await fetch("/api/cart");
 
-            // 401 is the expected response for guests — treat it as
-            // "empty cart" rather than an error so the UI stays clean.
-            if (res.status === 401) {
+            // 401 = guest (not logged in), 403 = logged in but not yet approved.
+            // Both are expected states — treat as empty cart, no error.
+            if (res.status === 401 || res.status === 403) {
                 setItems([]);
                 setError(null);
                 return;
