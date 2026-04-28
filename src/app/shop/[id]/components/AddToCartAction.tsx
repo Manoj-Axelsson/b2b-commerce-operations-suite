@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { useState } from "react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartContext } from "@/components/cart/CartContext";
@@ -11,6 +12,8 @@ interface AddToCartActionProps {
     quantity: number;
     // True only when the user is logged in AND has been approved by an admin.
     isApproved: boolean;
+    // True when the user has an active session (regardless of approval status).
+    isLoggedIn: boolean;
 }
 
 const AddToCartAction = ({
@@ -19,6 +22,7 @@ const AddToCartAction = ({
     discountPrice,
     quantity,
     isApproved,
+    isLoggedIn,
 }: AddToCartActionProps) => {
     const { addToCart, getCartQuantity, isAtStockLimit } = useCartContext();
     const [isAdding, setIsAdding] = useState(false);
@@ -45,7 +49,24 @@ const AddToCartAction = ({
         return "Add to Cart";
     };
 
-    // Non-approved users (guests or pending approval) cannot see price or add to cart
+    // Guests (not logged in) — show a prompt with a login link
+    if (!isLoggedIn) {
+        return (
+            <div className="flex flex-col gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-brand-border">
+                <span className="text-muted-foreground text-sm italic">
+                    Log in to view price
+                </span>
+                <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center w-full sm:w-72 py-3 sm:py-4 rounded-full font-bold uppercase tracking-[0.15em] text-sm bg-brand-border text-brand-primary hover:bg-brand-cream border border-brand-border/60 transition-all duration-300"
+                >
+                    Log in to order
+                </Link>
+            </div>
+        );
+    }
+
+    // Logged in but pending approval — show an informational message
     if (!isApproved) {
         return (
             <div className="flex flex-col gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-brand-border">

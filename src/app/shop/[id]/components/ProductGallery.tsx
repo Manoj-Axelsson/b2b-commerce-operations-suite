@@ -30,6 +30,7 @@ const ProductGallery = ({ images, name }: ProductGalleryProps) => {
                     src={images[activeIndex]}
                     alt={`${name} - View ${activeIndex + 1}`}
                     fill
+                    sizes="(min-width: 1024px) 50vw, 100vw"
                     className="object-contain p-6 sm:p-8 transition-transform duration-700 group-hover:scale-105"
                     priority
                 />
@@ -72,7 +73,7 @@ const ProductGallery = ({ images, name }: ProductGalleryProps) => {
                                 activeIndex === idx ? "border-brand-gold-dark" : "border-transparent opacity-60 hover:opacity-100",
                             )}
                         >
-                            <Image src={img} alt="" fill className="object-cover" />
+                            <Image src={img} alt="" fill sizes="80px" className="object-cover" />
                         </button>
                     ))}
                 </div>
