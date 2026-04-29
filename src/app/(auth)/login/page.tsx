@@ -58,7 +58,8 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <AuthForm onSubmit={handleSubmit} submitLabel="Log In" error={error}>
-        <h1 className="text-xl font-bold text-center">Log In</h1>
+        {/* text-2xl (up from text-xl) + font-semibold + text-slate-950 for high-contrast Garamond heading */}
+        <h1 className="text-2xl font-semibold text-slate-950 text-center">Log In</h1>
 
         <FormField
           label="Email"
@@ -77,14 +78,15 @@ export default function LoginPage() {
         />
 
         {/* Remember me + Forgot password row */}
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-gray-600">
+        {/* text-base (up from text-sm) throughout for Garamond legibility */}
+        <div className="flex items-center justify-between text-base">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-slate-950 font-medium">
             <input
               id="remember-me"
               type="checkbox"
               checked={form.rememberMe}
               onChange={(e) => setForm({ ...form, rememberMe: e.target.checked })}
-              className="w-4 h-4 rounded border-gray-300 text-yellow-700 focus:ring-yellow-600 cursor-pointer"
+              className="w-4 h-4 rounded border-slate-400 text-yellow-700 focus:ring-yellow-600 cursor-pointer"
             />
             Remember me
           </label>
@@ -96,8 +98,9 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
-          <p className="text-sm text-center text-gray-600">
+        <div className="flex flex-col gap-2 pt-4 border-t border-slate-200">
+          {/* text-base (up from text-sm) + text-slate-800 (up from text-gray-600) */}
+          <p className="text-base text-center text-slate-800">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-yellow-700 font-bold hover:underline">
               Register

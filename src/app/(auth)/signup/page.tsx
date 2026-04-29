@@ -41,7 +41,8 @@ export default function SignupPage() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <AuthForm onSubmit={handleSubmit} submitLabel="Register" error={error}>
-        <h1 className="text-xl font-bold text-center">Register</h1>
+        {/* text-2xl + font-semibold + text-slate-950 — matches login heading style */}
+        <h1 className="text-2xl font-semibold text-slate-950 text-center">Register</h1>
 
         <FormField
           label="Name"
@@ -67,10 +68,12 @@ export default function SignupPage() {
           required
         />
 
-        {success && <p className="text-green-600 text-sm text-center">{success}</p>}
+        {/* text-base (up from text-sm) + text-green-700 for high-contrast success state */}
+        {success && <p className="text-base font-medium text-green-700 text-center">{success}</p>}
 
-        <div className="flex flex-col gap-2 pt-4 border-t border-gray-100 mt-4">
-          <p className="text-sm text-center text-gray-600">
+        <div className="flex flex-col gap-2 pt-4 border-t border-slate-200 mt-4">
+          {/* text-base (up from text-sm) + text-slate-800 for contrast */}
+          <p className="text-base text-center text-slate-800">
             Already have an account?{" "}
             <Link href="/login" className="text-yellow-700 font-bold hover:underline">
               Log In
@@ -78,7 +81,7 @@ export default function SignupPage() {
           </p>
           <Link
             href="/forgot-password"
-            className="text-xs text-center text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-sm text-center text-slate-500 hover:text-yellow-700 transition-colors"
           >
             Forgot password?
           </Link>
