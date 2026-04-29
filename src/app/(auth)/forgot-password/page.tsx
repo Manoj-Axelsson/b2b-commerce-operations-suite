@@ -32,8 +32,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthForm onSubmit={handleSubmit} submitLabel="Send Reset Link" error={error}>
-      <h1 className="text-xl font-bold text-center">Forgot Password</h1>
-      <p className="text-sm text-center text-gray-500">
+      {/* text-2xl + font-semibold + text-slate-950 — consistent with other auth headings */}
+      <h1 className="text-2xl font-semibold text-slate-950 text-center">Forgot Password</h1>
+      {/* text-base (up from text-sm) + text-slate-700 (up from text-gray-500) */}
+      <p className="text-base text-center text-slate-700">
         Enter your email and we&apos;ll send you a reset link.
       </p>
       <FormField
@@ -43,11 +45,13 @@ export default function ForgotPasswordPage() {
         onChange={setEmail}
         required
       />
-      {message && <p className="text-sm text-green-700 text-center">{message}</p>}
-      <div className="pt-2 border-t border-gray-100">
+      {/* text-base (up from text-sm) + text-green-700 for high-contrast success state */}
+      {message && <p className="text-base font-medium text-green-700 text-center">{message}</p>}
+      <div className="pt-2 border-t border-slate-200">
+        {/* text-base (up from text-sm) + text-slate-600 for clear back link */}
         <Link
           href="/login"
-          className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-yellow-700 transition-colors"
+          className="flex items-center justify-center gap-1 text-base text-slate-600 hover:text-yellow-700 transition-colors"
         >
           <span aria-hidden="true">&larr;</span> Back to Log In
         </Link>

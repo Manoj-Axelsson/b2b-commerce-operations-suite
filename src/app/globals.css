@@ -54,7 +54,8 @@
 
 :root {
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Increased contrast (0.08 L vs 0.145) for sharper Garamond rendering */
+  --foreground: oklch(0.08 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -127,10 +128,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    /* subpixel-antialiased sharpens Garamond's thin strokes on desktop screens */
+    @apply bg-background text-foreground subpixel-antialiased;
   }
 
   html {
-    @apply font-sans;
+    /* text-lg as global floor — +1pt on top of previous +2pt change (total +3pt from original) */
+    @apply font-sans text-lg;
   }
 }
