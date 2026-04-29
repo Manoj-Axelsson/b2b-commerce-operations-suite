@@ -23,6 +23,7 @@ interface ProductFormProps {
     discountPrice?: number | null;
     discountStart?: Date | null;
     discountEnd?: Date | null;
+    expiryDate?: Date | null;
   };
 }
 
@@ -52,8 +53,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               required
               defaultValue={product?.name ?? ""}
               className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="e.g. Classic Basmati Rice"
-            />
+              placeholder="e.g. Classic Basmati Rice" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -66,8 +66,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               required
               defaultValue={product?.brand ?? ""}
               className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="e.g. Rajput Foods"
-            />
+              placeholder="e.g. Rajput Foods" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -80,8 +79,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               required
               defaultValue={product?.articleNo ?? ""}
               className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="e.g. RF-001"
-            />
+              placeholder="e.g. RF-001" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -116,8 +114,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
             rows={3}
             defaultValue={product?.description ?? ""}
             className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none resize-none"
-            placeholder="Optional product description visible to customers"
-          />
+            placeholder="Optional product description visible to customers" />
         </div>
       </section>
 
@@ -138,8 +135,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               required
               defaultValue={product?.weightValue ?? ""}
               className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="e.g. 5000"
-            />
+              placeholder="e.g. 5000" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -171,8 +167,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               required
               defaultValue={product?.price ?? ""}
               className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="e.g. 24900 = 249.00 kr"
-            />
+              placeholder="e.g. 24900 = 249.00 kr" />
             <p className="text-[10px] text-gray-400">100 öre = 1 kr.</p>
           </div>
 
@@ -192,8 +187,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
                 min={0}
                 defaultValue={product?.discountPrice ?? ""}
                 className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-400 outline-none"
-                placeholder="Must be < Regular Price"
-              />
+                placeholder="Must be < Regular Price" />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -205,8 +199,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
                 name="discountStart"
                 type="date"
                 defaultValue={product?.discountStart ? new Date(product.discountStart).toISOString().split('T')[0] : ""}
-                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
-              />
+                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none" />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -218,8 +211,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
                 name="discountEnd"
                 type="date"
                 defaultValue={product?.discountEnd ? new Date(product.discountEnd).toISOString().split('T')[0] : ""}
-                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
-              />
+                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none" />
             </div>
           </div>
           <p className="text-[10px] text-gray-400 mt-2 italic">Note: End date must be in the future and after Start date.</p>
@@ -241,8 +233,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               type="number"
               min={0}
               defaultValue={product?.quantity ?? 0}
-              className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
-            />
+              className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -255,12 +246,25 @@ export function ProductForm({ categories, product }: ProductFormProps) {
               type="number"
               min={0}
               defaultValue={product?.minQuantity ?? 5}
-              className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
-            />
+              className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 outline-none" />
           </div>
 
         </div>
-      </section>
+
+        <div className="flex flex-col gap-1 sm:col-span-2 mt-2 pt-4 border-t border-dashed border-gray-100">
+          <label htmlFor="expiryDate" className="text-[14px] font-bold text-slate-950 uppercase tracking-wider subpixel-antialiased">
+            Expiry Date
+          </label>
+          <input
+            id="expiryDate"
+            name="expiryDate"
+            type="date"
+            defaultValue={product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : ""}
+            className="border rounded px-3 py-2 text-lg text-slate-950 focus:ring-2 focus:ring-yellow-400 outline-none subpixel-antialiased" />
+          <p className="text-[10px] text-gray-400 mt-1 italic">Controls the 3-day expiry notification in the Admin command center.</p>
+        </div>
+
+    </section>
 
       <section className="bg-white border rounded-lg p-6 space-y-4">
         <h2 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Image</h2>
@@ -274,8 +278,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
             name="imageUrl"
             defaultValue={product?.imageUrl ?? ""}
             className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-yellow-400 outline-none"
-            placeholder="e.g. /images/products/basmati.jpg"
-          />
+            placeholder="e.g. /images/products/basmati.jpg" />
           <p className="text-[10px] text-gray-400">
             Upload image files to <code>public/images/products/</code> and enter the path here.
             Phase 2 will add drag-and-drop uploads directly.
@@ -297,7 +300,6 @@ export function ProductForm({ categories, product }: ProductFormProps) {
           Cancel
         </a>
       </div>
-
     </form>
   );
 }
