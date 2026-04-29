@@ -40,10 +40,13 @@ export default function TwoFactorPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-sm space-y-6 p-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* subpixel-antialiased sharpens Garamond strokes; slate-200 border for crisper card edge */}
+      <div className="w-full max-w-sm space-y-6 p-8 rounded-2xl border border-slate-200 bg-white shadow-sm subpixel-antialiased">
         <div className="space-y-1 text-center">
-          <h1 className="text-xl font-bold">Two-Factor Authentication</h1>
-          <p className="text-sm text-slate-500">
+          {/* text-2xl + font-semibold + text-slate-950 — consistent with other auth headings */}
+          <h1 className="text-2xl font-semibold text-slate-950">Two-Factor Authentication</h1>
+          {/* text-base (up from text-sm) + text-slate-700 (up from text-slate-500) */}
+          <p className="text-base text-slate-700">
             Enter the 6-digit code from your authenticator app.
           </p>
         </div>
@@ -59,22 +62,25 @@ export default function TwoFactorPage() {
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             required
-            className="w-full text-center text-2xl tracking-widest border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            // text-2xl + tracking-widest kept for TOTP UX; border upgraded to slate for contrast
+            className="w-full text-center text-2xl tracking-widest border border-slate-400 rounded-lg px-4 py-3 text-slate-950 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
 
-          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+          {/* text-base (up from text-sm) + text-slate-800 (up from text-slate-600) + font-medium */}
+          <label className="flex items-center gap-2 text-base font-medium text-slate-800 cursor-pointer">
             <input
               id="trust-device"
               type="checkbox"
               checked={trustDevice}
               onChange={(e) => setTrustDevice(e.target.checked)}
-              className="rounded"
+              className="rounded border-slate-400"
             />
             Trust this device for 30 days
           </label>
 
           {error && (
-            <p className="text-sm text-red-600 text-center">{error}</p>
+            // text-base (up from text-sm) + text-red-700 for high-contrast error
+            <p className="text-base font-medium text-red-700 text-center">{error}</p>
           )}
 
           <button

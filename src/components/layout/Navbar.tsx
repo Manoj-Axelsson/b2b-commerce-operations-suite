@@ -13,6 +13,17 @@ export default async function Navbar() {
   const isLoggedIn = !!session?.user;
   const isAdmin = session?.user?.role === "admin";
 
+  // Fetch isApproved from DB — needed to gate the cart icon.
+  // Only runs when a user is logged in; resolves to false otherwise.
+  const userId = session?.user?.id;
+  const userData = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { isApproved: true },
+      })
+    : null;
+  const isApproved = userData?.isApproved ?? false;
+
   // Fetch all categories for the Shop dropdown
   const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
@@ -23,6 +34,7 @@ export default async function Navbar() {
     <NavbarClient
       isAdmin={isAdmin}
       isLoggedIn={isLoggedIn}
+      isApproved={isApproved}
       categories={categories}
     />
   );

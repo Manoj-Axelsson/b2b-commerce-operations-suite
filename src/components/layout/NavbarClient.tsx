@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { NavbarCartButton } from "./NavbarCartButton";
 
 interface NavLink {
   href: string;
@@ -19,6 +20,7 @@ interface Category {
 interface NavbarClientProps {
   isAdmin: boolean;
   isLoggedIn: boolean;
+  isApproved: boolean;
   categories: Category[];
 }
 
@@ -27,7 +29,8 @@ interface NavbarClientProps {
 function buildLinks(isLoggedIn: boolean, isAdmin: boolean): NavLink[] {
   const links: NavLink[] = [{ href: "/shop", label: "Shop" }];
 
-  if (isLoggedIn) {
+  // My Account is hidden for admins — they operate through the Admin panel
+  if (isLoggedIn && !isAdmin) {
     links.push({ href: "/account", label: "My Account" });
   }
 
@@ -43,7 +46,7 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function NavbarClient({ isAdmin, isLoggedIn, categories }: NavbarClientProps) {
+export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: NavbarClientProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
@@ -197,17 +200,23 @@ export function NavbarClient({ isAdmin, isLoggedIn, categories }: NavbarClientPr
                 </Link>
               </div>
             )}
+
+            {/* Cart icon — far right, after auth buttons */}
+            <NavbarCartButton isAdmin={isAdmin} isApproved={isApproved} />
           </div>
 
-          {/* Mobile hamburger button */}
-          <button
-            id="navbar-mobile-menu-button"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isMenuOpen}
-            aria-controls="navbar-mobile-menu"
-            className="md:hidden flex items-center justify-center w-10 h-10 rounded-md text-white hover:text-brand-gold transition-colors duration-200"
-          >
+          {/* Mobile: cart icon + hamburger — visible in the header bar, not inside the dropdown */}
+          <div className="md:hidden flex items-center gap-3">
+            <NavbarCartButton isAdmin={isAdmin} isApproved={isApproved} />
+
+            <button
+              id="navbar-mobile-menu-button"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
+              aria-controls="navbar-mobile-menu"
+              className="flex items-center justify-center w-10 h-10 rounded-md text-white hover:text-brand-gold transition-colors duration-200"
+            >
             {isMenuOpen ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -233,7 +242,8 @@ export function NavbarClient({ isAdmin, isLoggedIn, categories }: NavbarClientPr
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
               </svg>
             )}
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
