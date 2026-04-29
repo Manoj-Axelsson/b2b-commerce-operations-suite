@@ -202,7 +202,9 @@ export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: Na
             )}
 
             {/* Cart icon — far right, after auth buttons */}
-            <NavbarCartButton isAdmin={isAdmin} isApproved={isApproved} />
+            <div className="ml-4">
+              <NavbarCartButton isAdmin={isAdmin} isApproved={isApproved} />
+            </div>
           </div>
 
           {/* Mobile: cart icon + hamburger — visible in the header bar, not inside the dropdown */}

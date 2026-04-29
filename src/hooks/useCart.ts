@@ -68,7 +68,7 @@ export function useCart(): CartState {
                     );
                 }
 
-                return [...prev, { productId, quantity: 1, product: { id: productId, name: "", price: 0, quantity: 0 } }];
+                return [...prev, { productId, quantity: 1, product: { id: productId, name: "", price: 0, quantity: 9999 } }];
             });
 
             try {
@@ -82,7 +82,7 @@ export function useCart(): CartState {
 
                 await syncCart();
             } catch (err) {
-                console.error(err);
+                console.error("Add to cart error:", err instanceof Error ? err.message : err);
                 await syncCart();
             }
         },
@@ -109,7 +109,7 @@ export function useCart(): CartState {
 
                 await syncCart();
             } catch (err) {
-                console.error(err);
+                console.error("Update quantity error:", err instanceof Error ? err.message : err);
                 await syncCart();
             }
         },
@@ -132,7 +132,7 @@ export function useCart(): CartState {
 
                 await syncCart();
             } catch (err) {
-                console.error(err);
+                console.error("Remove from cart error:", err instanceof Error ? err.message : err);
                 await syncCart();
             }
         },
@@ -145,7 +145,7 @@ export function useCart(): CartState {
             const res = await fetch("/api/cart", { method: "DELETE" });
             if (!res.ok) throw new Error("Clear cart failed");
         } catch (err) {
-            console.error(err);
+            console.error("Clear cart error:", err instanceof Error ? err.message : err);
             await syncCart();
         }
     }, [syncCart]);
