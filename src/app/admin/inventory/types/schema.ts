@@ -27,6 +27,7 @@ export const BaseProductSchema = z.object({
   discountPrice: z.number().int().positive().nullable().optional(),
   discountStart: z.date().nullable().optional(),
   discountEnd: z.date().nullable().optional(),
+  expiryDate: z.date().nullable().optional(),
   discountType: DiscountTypeSchema.nullable().optional(),
   quantity: z.number().int().min(0, "Quantity cannot be negative"),
   minQuantity: z.number().int().min(0, "Minimum quantity cannot be negative"),
