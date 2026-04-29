@@ -81,7 +81,8 @@ export default function ResetPasswordClient() {
         onChange={(value) => setForm({ ...form, confirmPassword: value })}
         required
       />
-      {message && <p>{message}</p>}
+      {/* text-base + text-green-700 for high-contrast success confirmation */}
+      {message && <p className="text-base font-medium text-green-700 text-center">{message}</p>}
     </AuthForm>
   );
 }
