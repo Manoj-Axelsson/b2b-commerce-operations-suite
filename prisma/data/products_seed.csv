@@ -1,0 +1,11 @@
+product_name,brand,article_no,category,description,weight_value,unit,price_ore,current_stock,min_stock,expiry_date,image_path
+Ginger Garlic Paste,Shan,SH-001,Condiments,Fresh ground ginger and garlic paste,310,g,3500,50,10,2027-05-30,/images/products/ginger-garlic.png
+Chili Pickle,Shan,SH-002,Pickles,Hot and tangy chilies in oil,300,g,2900,40,5,2026-12-15,/images/products/chili-pickle.png
+Hyderabadi Mixed Pickle,Shan,SH-003,Pickles,Traditional mixed vegetables in oil,300,g,2900,35,5,2026-11-20,/images/products/hyderabadi-pickle.png
+Mango Pickle,Shan,SH-004,Pickles,Spicy green mangoes in oil,300,g,2900,60,10,2027-01-10,/images/products/mango-pickle.png
+Mixed Pickle,Shan,SH-005,Pickles,Zesty mixed vegetable accompaniment,300,g,2900,45,5,2026-10-05,/images/products/mixed-pickle.png
+Virgin Pink Himalayan Salt,Shan,SH-006,Pantry,Naturally fortified with 84 trace minerals,400,g,1900,100,20,2029-01-01,/images/products/himalayan-salt.png
+Plum Chutney,Shan,SH-007,Condiments,Sweet and spicy accompaniment,400,g,3200,25,5,2026-08-14,/images/products/plum-chutney.png
+Shahi Haleem Mix,Shan,SH-008,Recipe Mix,Mix for meat lentil and wheat mix,300,g,2500,50,15,2027-03-22,/images/products/haleem-mix.png
+Biryani Recipe Mix,Shan,SH-009,Recipe Mix,Seasoning mix for tasty meat layered pilaf,50,g,1500,150,30,2027-06-01,/images/products/biryani-mix.png
+Butter Chicken Mix,Shan,SH-010,Recipe Mix,Juicy chicken in rich tomato and butter sauce,50,g,1500,120,30,2027-04-15,/images/products/butter-chicken.png
