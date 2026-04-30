@@ -1,9 +1,26 @@
 import prisma from "@/lib/prisma";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+interface WishlistAnalyticsProduct {
+  id: string;
+  name: string;
+  brand: string;
+  articleNo: string;
+  price: number;
+  imageUrl: string | null;
+  quantity: number;
+  _count: {
+    wishlistedBy: number;
+  };
+  wishlistedBy: {
+    createdAt: Date;
+  }[];
+}
 
 export default async function WishlistAnalyticsPage() {
   const wishlistedProducts = await prisma.product.findMany({
@@ -39,7 +56,7 @@ export default async function WishlistAnalyticsPage() {
 
   // Prisma's relation count orderBy can sometimes be problematic depending on the driver,
   // so sorting in memory is perfectly fine here since it's just the products that are wishlisted.
-  const sortedProducts = wishlistedProducts.sort((a: any, b: any) => b._count.wishlistedBy - a._count.wishlistedBy);
+  const sortedProducts = wishlistedProducts.sort((a: WishlistAnalyticsProduct, b: WishlistAnalyticsProduct) => b._count.wishlistedBy - a._count.wishlistedBy);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -79,7 +96,13 @@ export default async function WishlistAnalyticsPage() {
                       <div className="flex items-center gap-4">
                         {product.imageUrl ? (
                           <div className="w-12 h-12 rounded-md bg-brand-cream shrink-0 overflow-hidden relative">
-                            <img src={product.imageUrl} alt={product.name} className="object-cover w-full h-full" />
+                            <Image 
+                              src={product.imageUrl} 
+                              alt={product.name} 
+                              fill
+                              sizes="48px"
+                              className="object-cover" 
+                            />
                           </div>
                         ) : (
                           <div className="w-12 h-12 rounded-md bg-brand-cream shrink-0 flex items-center justify-center text-brand-border font-serif italic text-xs">

@@ -9,7 +9,7 @@ const WishlistActionSchema = z.object({
   action: z.enum(["add", "remove"]),
 });
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
