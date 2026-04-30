@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { EB_Garamond } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/CartContext";
+import { WishlistProvider } from "@/components/wishlist/WishlistContext";
 import Navbar from "@/components/layout/Navbar";
 
 const ebGaramond = EB_Garamond({
@@ -25,13 +26,15 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     <html lang="en" className={`${ebGaramond.variable} subpixel-antialiased`}>
       <body className="min-h-screen bg-background font-serif">
         <CartProvider>
-          {/* Sticky navbar — above all pages per DX spec */}
-          <Navbar />
+          <WishlistProvider>
+            {/* Sticky navbar — above all pages per DX spec */}
+            <Navbar />
 
-          <main>
-            {children}
-          </main>
+            <main>
+              {children}
+            </main>
 
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>
