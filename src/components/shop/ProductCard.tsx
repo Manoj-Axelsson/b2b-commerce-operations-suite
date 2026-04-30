@@ -3,6 +3,7 @@ import { ProductCardProps } from "@/types/shop";
 import { formatCurrency, cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 export const ProductCard = ({ product, priority, isApproved }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
@@ -22,6 +23,8 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                     Special Offer
                 </div>
             )}
+
+            <WishlistButton productId={product.id} />
 
             {/* Clicking the image and info navigates to the product detail page */}
             <Link
