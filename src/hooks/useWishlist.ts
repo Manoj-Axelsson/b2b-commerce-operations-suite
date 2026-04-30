@@ -2,34 +2,44 @@ import { useState, useEffect, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export const useWishlist = () => {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const isVerified = session?.user?.emailVerified ?? false;
-
-  const fetchWishlist = useCallback(async () => {
-    if (!isVerified) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/wishlist");
-      if (response.ok) {
-        const data = await response.json();
-        setWishlistIds(new Set(data.productIds));
-      }
-    } catch (error) {
-      console.error("Failed to fetch wishlist", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isVerified]);
+  
+  // Derive loading state to avoid synchronous state updates in effects
+  const isLoading = isPending || (isVerified && !hasFetched);
 
   useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+    let ignore = false;
+    
+    async function loadWishlist() {
+      try {
+        const response = await fetch("/api/wishlist");
+        if (response.ok) {
+          const data = await response.json();
+          if (!ignore) {
+            setWishlistIds(new Set(data.productIds));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch wishlist", error);
+      } finally {
+        if (!ignore) {
+          setHasFetched(true);
+        }
+      }
+    }
+
+    if (isVerified && !hasFetched) {
+      loadWishlist();
+    }
+    
+    return () => {
+      ignore = true;
+    };
+  }, [isVerified, hasFetched]);
 
   const toggleWishlist = async (productId: string) => {
     if (!isVerified) return;
@@ -57,12 +67,20 @@ export const useWishlist = () => {
 
       if (!response.ok) {
         // Revert on failure
-        fetchWishlist();
+        const revertResponse = await fetch("/api/wishlist");
+        if (revertResponse.ok) {
+          const data = await revertResponse.json();
+          setWishlistIds(new Set(data.productIds));
+        }
       }
     } catch (error) {
       console.error(`Failed to ${action} wishlist item`, error);
       // Revert on failure
-      fetchWishlist();
+      const revertResponse = await fetch("/api/wishlist");
+      if (revertResponse.ok) {
+        const data = await revertResponse.json();
+        setWishlistIds(new Set(data.productIds));
+      }
     }
   };
 
