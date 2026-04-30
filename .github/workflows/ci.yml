@@ -15,9 +15,7 @@ jobs:
       DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
       BETTER_AUTH_SECRET: "ci-secret-for-build"
       NEXT_PUBLIC_BETTER_AUTH_URL: "http://localhost:3000"
-      # Opt into Node.js 24 for all actions now — Node.js 20 actions are deprecated
-      # and will be forced to Node.js 24 by default from June 2nd, 2026.
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,4 +37,3 @@ jobs:
 
       - name: Build
         run: npx next build
-
