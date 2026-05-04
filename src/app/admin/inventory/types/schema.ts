@@ -1,16 +1,11 @@
 import { z } from "zod";
 
-/**
- * DiscountType Enum
- * Matches the Prisma schema definitions.
- */
 export const DiscountTypeSchema = z.enum(["SPECIAL_OFFER", "PROMOTION", "CLEARANCE"]);
 
-/**
- * Base Product Schema 
- * Defines the core fields for a Rajput Foods product.
- * This replaces the previously missing generated schema to ensure build stability.
- */
+// Base Product Schema 
+// Defines the core fields for a Rajput Foods product.
+// This replaces missing generated schemas to ensure build stability.
+
 export const BaseProductSchema = z.object({
   id: z.string().uuid().optional(),
   articleNo: z.string().min(1, "Article number is required"),
@@ -35,32 +30,26 @@ export const BaseProductSchema = z.object({
   supplierId: z.string().nullable().optional(),
 });
 
-/**
- * AdminProductUpdateSchema
- * 
- * Implements strict business logic for Rajput Foods product management:
- * 1. Discount Price must be less than Base Price.
- * 2. If a discount is active, start and end dates are mandatory.
- * 3. Discount End date must be in the future and after the start date.
- */
+// AdminProductUpdateSchema
+
 export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx) => {
   const { price, discountPrice, discountStart, discountEnd } = data;
 
   // Logic 1: Discount Price validation
   if (discountPrice !== undefined && discountPrice !== null) {
-    // A: Must be lower than regular price
+    // Must be lower than regular price
     if (discountPrice >= price) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Discount price must be lower than the regular price",
         path: ["discountPrice"],
       });
     }
 
-    // B: Mandatory dates if discount price is set
+    // Mandatory dates if discount price is set
     if (!discountStart) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Discount start date is required when a discount price is set",
         path: ["discountStart"],
       });
@@ -68,7 +57,7 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
 
     if (!discountEnd) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Discount end date is required when a discount price is set",
         path: ["discountEnd"],
       });
@@ -82,7 +71,7 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
     // End must be after Start
     if (discountEnd <= discountStart) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Discount end date must be after the start date",
         path: ["discountEnd"],
       });
@@ -91,7 +80,7 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
     // End must be in the future
     if (discountEnd <= now) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Discount end date must be in the future",
         path: ["discountEnd"],
       });
@@ -99,8 +88,14 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
   }
 });
 
-/**
- * Inferred TypeScript type for use in forms and server actions
- */
-export type AdminProductUpdate = z.infer<typeof AdminProductUpdateSchema>;
+// NotificationStatus Type for the 3-day rule.
+export type NotificationStatus = 'STABLE' | 'STARTING_SOON' | 'ENDING_SOON' | 'EXPIRED';
 
+// Client-side interface for Product data.
+export interface ProductWithNotifications extends z.infer<typeof AdminProductUpdateSchema> {
+  notificationStatus: NotificationStatus;
+}
+
+// Inferred TypeScript type for use in forms and server actions.
+
+export type AdminProductUpdate = z.infer<typeof AdminProductUpdateSchema>;
