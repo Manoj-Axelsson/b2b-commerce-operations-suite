@@ -86,6 +86,9 @@ const ShopPage = async ({ searchParams }: ShopPageProps) => {
         weightUnit:   item.weightUnit,
         price:        item.price,
         discountPrice: item.discountPrice,
+        discountStart: item.discountStart,
+        discountEnd:   item.discountEnd,
+        discountType:  item.discountType,
         imageUrl:     item.imageUrl,
         quantity:     item.quantity,
     }));

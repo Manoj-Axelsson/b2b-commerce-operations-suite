@@ -11,6 +11,9 @@ export interface Product {
     weightUnit: string;
     price: number;
     discountPrice?: number | null;
+    discountStart?: Date | null;
+    discountEnd?: Date | null;
+    discountType?: string | null;
     imageUrl?: string | null;
     quantity: number;
 }

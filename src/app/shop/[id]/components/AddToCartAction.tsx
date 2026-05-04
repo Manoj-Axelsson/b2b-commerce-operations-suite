@@ -87,7 +87,7 @@ const AddToCartAction = ({
                     <span className="text-2xl sm:text-3xl font-bold text-brand-gold-dark font-sans">
                         {formatCurrency(displayPrice)}
                     </span>
-                    {discountPrice && (
+                    {discountPrice !== null && discountPrice !== undefined && (
                         <span className="text-muted-foreground line-through text-sm">
                             {formatCurrency(basePrice)}
                         </span>

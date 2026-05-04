@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import ProductGallery from "./components/ProductGallery";
 import AddToCartAction from "./components/AddToCartAction";
 
@@ -35,6 +36,13 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
         isApproved = dbUser?.isApproved ?? false;
     }
 
+    const now = new Date();
+    const isActiveOffer = product.discountPrice != null &&
+        (!product.discountStart || now >= product.discountStart) &&
+        (!product.discountEnd || now <= product.discountEnd);
+
+    const isDiscounted = isActiveOffer && product.price != null && product.discountPrice! < product.price;
+
     return (
         <main className="max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
             <div className="mb-6 sm:mb-8">
@@ -57,6 +65,16 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
 
                 <div className="mt-8 px-0 sm:mt-12 lg:mt-0">
                     <div className="flex flex-col gap-2">
+                        {isDiscounted && isApproved && (
+                            <div className="flex">
+                                <span className={cn(
+                                    "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-sm",
+                                    product.discountType === "CLEARANCE" ? "bg-red-700" : "bg-brand-gold-dark"
+                                )}>
+                                    {product.discountType?.replace("_", " ") || "Promotion"}
+                                </span>
+                            </div>
+                        )}
                         <span className="text-xs font-bold text-brand-gold-dark uppercase tracking-[0.2em]">
                             {product.brand}
                         </span>
@@ -84,7 +102,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
                     <AddToCartAction
                         productId={product.id}
                         basePrice={product.price}
-                        discountPrice={product.discountPrice}
+                        discountPrice={isDiscounted ? product.discountPrice : null}
                         quantity={product.quantity}
                         isApproved={isApproved}
                         isLoggedIn={isLoggedIn}

@@ -7,7 +7,12 @@ import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 export const ProductCard = ({ product, priority, isApproved }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
-    const isDiscounted = product.discountPrice != null && product.price != null && product.discountPrice < product.price;
+    const now = new Date();
+    const isActiveOffer = product.discountPrice != null && 
+        (!product.discountStart || now >= new Date(product.discountStart)) && 
+        (!product.discountEnd || now <= new Date(product.discountEnd));
+
+    const isDiscounted = isActiveOffer && product.price != null && product.discountPrice! < product.price;
 
     return (
         <article
@@ -17,10 +22,13 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                 !isInStock && "opacity-90 grayscale-[0.3]",
             )}
         >
-            {/* Special Offer badge — only shown to approved users since it references pricing */}
+            {/* Promotion badge — only shown to approved users since it references pricing */}
             {isDiscounted && isApproved && (
-                <div className="absolute top-3 left-3 z-10 bg-brand-gold-dark text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md sm:top-4 sm:left-4">
-                    Special Offer
+                <div className={cn(
+                    "absolute top-3 left-3 z-10 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md sm:top-4 sm:left-4",
+                    product.discountType === "CLEARANCE" ? "bg-red-700" : "bg-brand-gold-dark"
+                )}>
+                    {product.discountType?.replace("_", " ") || "Promotion"}
                 </div>
             )}
 
@@ -74,7 +82,7 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                     <div className="mt-auto pt-2 border-t border-brand-border/40 min-h-8">
                         {isApproved ? (
                             // Prices are only visible to approved customers
-                            isDiscounted && product.discountPrice ? (
+                            isDiscounted && product.discountPrice !== null && product.discountPrice !== undefined ? (
                                 <>
                                     <span className="text-brand-gold-dark font-bold text-lg sm:text-xl tracking-tight">
                                         {formatCurrency(product.discountPrice)}
