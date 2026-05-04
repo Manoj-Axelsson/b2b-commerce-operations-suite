@@ -43,16 +43,26 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        const items = cart.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            product: {
-                id: item.product.id,
-                name: item.product.name,
-                price: item.product.price,
-                quantity: item.product.quantity, // stock level
-            },
-        }));
+        const now = new Date();
+        const items = cart.items.map((item) => {
+            const p = item.product;
+            const isActiveOffer = p.discountPrice != null &&
+                (!p.discountStart || now >= p.discountStart) &&
+                (!p.discountEnd || now <= p.discountEnd);
+            
+            const effectivePrice = isActiveOffer ? p.discountPrice! : p.price;
+
+            return {
+                productId: item.productId,
+                quantity: item.quantity,
+                product: {
+                    id: p.id,
+                    name: p.name,
+                    price: effectivePrice,
+                    quantity: p.quantity, // stock level
+                },
+            };
+        });
 
         return Response.json({ items });
 
