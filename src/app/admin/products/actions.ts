@@ -65,6 +65,7 @@ export async function createProduct(formData: FormData) {
     discountStart: parseFormDate(formData.get("discountStart")),
     discountEnd: parseFormDate(formData.get("discountEnd")),
     expiryDate: parseFormDate(formData.get("expiryDate")),
+    discountType: formData.get("discountType") as string,
   };
 
   const validation = AdminProductUpdateSchema.safeParse(rawData);
@@ -102,6 +103,7 @@ export async function createProduct(formData: FormData) {
         discountStart: d.discountStart ?? null,
         discountEnd: d.discountEnd ?? null,
         expiryDate: d.expiryDate ?? null,
+        discountType: d.discountType ?? "PROMOTION",
         isActive: true,
         isDeleted: false,
       },
@@ -142,6 +144,7 @@ export async function updateProduct(formData: FormData) {
     discountStart: parseFormDate(formData.get("discountStart")),
     discountEnd: parseFormDate(formData.get("discountEnd")),
     expiryDate: parseFormDate(formData.get("expiryDate")),
+    discountType: formData.get("discountType") as string,
   };
 
   const validation = AdminProductUpdateSchema.safeParse(rawData);
@@ -178,6 +181,7 @@ export async function updateProduct(formData: FormData) {
         discountStart: d.discountStart ?? null,
         discountEnd: d.discountEnd ?? null,
         expiryDate: d.expiryDate ?? null,
+        discountType: d.discountType ?? "PROMOTION",
       },
     });
   } catch (error) {

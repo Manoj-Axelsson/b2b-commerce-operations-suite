@@ -18,8 +18,8 @@ export const BaseProductSchema = z.object({
   description: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
   images: z.array(z.string()).optional(),
-  price: z.number().int().positive("Price must be a positive integer in cents"),
-  discountPrice: z.number().int().positive().nullable().optional(),
+  price: z.number().int().min(0, "Price cannot be negative"),
+  discountPrice: z.number().int().min(0, "Discount price cannot be negative").nullable().optional(),
   discountStart: z.date().nullable().optional(),
   discountEnd: z.date().nullable().optional(),
   expiryDate: z.date().nullable().optional(),
@@ -66,7 +66,6 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
 
   // Logic 2: Date cross-validation (End > Start and End in Future)
   if (discountStart && discountEnd) {
-    const now = new Date();
 
     // End must be after Start
     if (discountEnd <= discountStart) {
@@ -76,24 +75,22 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
         path: ["discountEnd"],
       });
     }
-
-    // End must be in the future
-    if (discountEnd <= now) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Discount end date must be in the future",
-        path: ["discountEnd"],
-      });
-    }
   }
 });
 
 // NotificationStatus Type for the 3-day rule.
 export type NotificationStatus = 'STABLE' | 'STARTING_SOON' | 'ENDING_SOON' | 'EXPIRED';
 
+// Detailed alert structure for promotions
+export interface PromotionAlert {
+  status: NotificationStatus;
+  msRemaining?: number;
+  isUrgent?: boolean; // True if < 8 hours
+}
+
 // Client-side interface for Product data.
 export interface ProductWithNotifications extends z.infer<typeof AdminProductUpdateSchema> {
-  notificationStatus: NotificationStatus;
+  promotionAlert: PromotionAlert;
 }
 
 // Inferred TypeScript type for use in forms and server actions.

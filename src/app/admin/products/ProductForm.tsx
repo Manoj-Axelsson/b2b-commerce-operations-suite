@@ -24,6 +24,7 @@ interface ProductFormProps {
     discountStart?: Date | null;
     discountEnd?: Date | null;
     expiryDate?: Date | null;
+    discountType?: string | null;
   };
 }
 
@@ -212,6 +213,22 @@ export function ProductForm({ categories, product }: ProductFormProps) {
                 type="date"
                 defaultValue={product?.discountEnd ? new Date(product.discountEnd).toISOString().split('T')[0] : ""}
                 className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none" />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="discountType" className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                Discount Type
+              </label>
+              <select
+                id="discountType"
+                name="discountType"
+                defaultValue={product?.discountType ?? "PROMOTION"}
+                className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none bg-white"
+              >
+                <option value="PROMOTION">Promotion</option>
+                <option value="CLEARANCE">Clearance</option>
+                <option value="SPECIAL_OFFER">Special Offer</option>
+              </select>
             </div>
           </div>
           <p className="text-[10px] text-gray-400 mt-2 italic">Note: End date must be in the future and after Start date.</p>
