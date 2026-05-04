@@ -47,20 +47,57 @@ const countPendingApprovals = async (): Promise<number> => {
   });
 };
 
-// Promotions ending within the next 24 hours (discountEnd is set and in the window)
-const countPromotionsEndingSoon = async (): Promise<number> => {
+// Detailed info for promotions
+export interface DetailedPromotionAlert {
+  productId: string;
+  productName: string;
+  articleNo: string;
+  eventType: 'STARTING' | 'ENDING';
+  discountType: string;
+}
+
+// Promotions starting within the next 24 hours
+const getPromotionsStartingSoon = async (): Promise<DetailedPromotionAlert[]> => {
   const now = getNow();
   const in24h = getIn24Hours();
 
-  return prisma.product.count({
+  const products = await prisma.product.findMany({
     where: {
       isDeleted: false,
-      discountEnd: {
-        gte: now,
-        lte: in24h,
-      },
+      discountStart: { gte: now, lte: in24h },
     },
+    select: { id: true, name: true, articleNo: true, discountType: true },
   });
+
+  return products.map(p => ({
+    productId: p.id,
+    productName: p.name,
+    articleNo: p.articleNo,
+    eventType: 'STARTING',
+    discountType: p.discountType ?? 'PROMOTION'
+  }));
+};
+
+// Promotions ending within the next 24 hours
+const getPromotionsEndingSoon = async (): Promise<DetailedPromotionAlert[]> => {
+  const now = getNow();
+  const in24h = getIn24Hours();
+
+  const products = await prisma.product.findMany({
+    where: {
+      isDeleted: false,
+      discountEnd: { gte: now, lte: in24h },
+    },
+    select: { id: true, name: true, articleNo: true, discountType: true },
+  });
+
+  return products.map(p => ({
+    productId: p.id,
+    productName: p.name,
+    articleNo: p.articleNo,
+    eventType: 'ENDING',
+    discountType: p.discountType ?? 'PROMOTION'
+  }));
 };
 
 // Products whose expiryDate is within the next 3 days (and not already expired)
@@ -81,18 +118,22 @@ const countExpiringSoon = async (): Promise<number> => {
 
 // Run all four queries in parallel for efficiency
 export const AdminNotifications = async () => {
-  const [lowStock, pendingApprovals, promotionsEndingSoon, expiringSoon] =
+  const [lowStock, pendingApprovals, promotionsStarting, promotionsEnding, expiringSoon] =
     await Promise.all([
       countLowStockProducts(),
       countPendingApprovals(),
-      countPromotionsEndingSoon(),
+      getPromotionsStartingSoon(),
+      getPromotionsEndingSoon(),
       countExpiringSoon(),
     ]);
+
+  const detailedPromotions = [...promotionsStarting, ...promotionsEnding];
 
   const counts: NotificationCounts = {
     lowStock,
     pendingApprovals,
-    promotionsEndingSoon,
+    promotionsEndingSoon: detailedPromotions.length,
+    detailedPromotions,
     expiringSoon,
   };
 

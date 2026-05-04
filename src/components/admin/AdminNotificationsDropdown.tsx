@@ -3,10 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 
+export interface DetailedPromotionAlert {
+  productId: string;
+  productName: string;
+  articleNo: string;
+  eventType: 'STARTING' | 'ENDING';
+  discountType: string;
+}
+
 export interface NotificationCounts {
   lowStock: number;
   pendingApprovals: number;
   promotionsEndingSoon: number;
+  detailedPromotions: DetailedPromotionAlert[];
   expiringSoon: number;
 }
 
@@ -27,6 +36,7 @@ interface NotificationItem {
 // Renders a bell icon badge in the sidebar and a dropdown panel on click.
 export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasViewed, setHasViewed] = useState(false);
 
   const totalAlerts =
     counts.lowStock +
@@ -37,7 +47,7 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
   const notifications: NotificationItem[] = [
     {
       id: "low-stock",
-      label: "Low / out of stock",
+      label: "Low or out of stock",
       count: counts.lowStock,
       href: "/admin/inventory",
       color: "text-red-600",
@@ -52,16 +62,8 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
       icon: "👤",
     },
     {
-      id: "promotions-ending",
-      label: "Promotions ending in < 24 h",
-      count: counts.promotionsEndingSoon,
-      href: "/admin/products",
-      color: "text-yellow-600",
-      icon: "🏷️",
-    },
-    {
       id: "expiring-soon",
-      label: "Products expiring in ≤ 3 days",
+      label: "Products expiring in three days or less",
       count: counts.expiringSoon,
       href: "/admin/inventory",
       color: "text-red-700",
@@ -69,14 +71,34 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
     },
   ];
 
+  // Add each promotion as a separate notification item
+  counts.detailedPromotions.forEach((promo) => {
+    notifications.push({
+      id: `promo-${promo.productId}-${promo.eventType}`,
+      label: `${promo.productName} (${promo.discountType.replace("_", " ")}) ${promo.eventType === "STARTING" ? "starting" : "ending"} in less than twenty-four hours`,
+      count: 1,
+      href: `/admin/products/${promo.productId}/edit`,
+      color: promo.eventType === "STARTING" ? "text-green-600" : "text-orange-600",
+      icon: "🏷️",
+    });
+  });
+
   // Only show items with at least one alert
   const activeNotifications = notifications.filter((n) => n.count > 0);
+
+  const handleToggle = () => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next) setHasViewed(true);
+      return next;
+    });
+  };
 
   return (
     <div className="relative">
       <button
         id="admin-notifications-button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggle}
         aria-label={`Notifications — ${totalAlerts} alert${totalAlerts !== 1 ? "s" : ""}`}
         aria-expanded={isOpen}
         className="flex items-center gap-2 w-full px-2 py-2 rounded-md hover:bg-yellow-100 transition-colors text-yellow-800"
@@ -100,10 +122,10 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
 
         <span className="text-sm font-semibold flex-1 text-left">Notifications</span>
 
-        {totalAlerts > 0 && (
+        {totalAlerts > 0 && !hasViewed && (
           <span
             aria-hidden="true"
-            className="w-5 h-5 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none flex-shrink-0"
+            className="w-5 h-5 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none shrink-0"
           >
             {totalAlerts > 99 ? "99+" : totalAlerts}
           </span>
