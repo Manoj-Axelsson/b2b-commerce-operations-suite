@@ -50,7 +50,7 @@ export default async function AdminInventoryPage() {
         </div>
       </div>
 
-// NEW SECTION: Promotion Alerts (The 3-Day Rule)
+      {/* NEW SECTION: Promotion Alerts (The 3-Day Rule) */}
 
       {priorityPromotions.length > 0 && (
         <section className="bg-amber-50 p-4 rounded-lg border border-amber-200">
@@ -77,7 +77,7 @@ export default async function AdminInventoryPage() {
         </section>
       )}
 
-// Existing Restocking Table
+      {/* Existing Restocking Table */}
 
       <section>
         <h2 className="text-xl font-semibold mb-3 text-red-600">Restocking required ({restockNeeded.length})</h2>
