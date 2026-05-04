@@ -61,7 +61,7 @@ src/
 
 ### Prerequisites
 
-- Node.js (Latest LTS)
+- Node.js 22 (LTS)
 - PostgreSQL instance
 - Direct connection string for Prisma
 
