@@ -1,75 +1,53 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ADMIN_EMAIL } from "@/lib/utils";
+import { auth } from "@/lib/auth";
 
+/**
+ * ROLE: Network Boundary & Security Hardening
+ * CONTEXT: Rajput-foods-Sweden (Next.js 16.2 + Node 24)
+ * TASK: Direct DB Session Validation & Node 24 Optimization
+ */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const response = NextResponse.next();
 
-  // Skip all API routes, Next.js internals, and static files.
-  // The matcher already excludes these, but this guard makes the intent explicit.
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
+  // 1. Security Hardening: Node 24 LTS Alignment
+  response.headers.set("x-rajput-runtime", "node-24-lts");
+  response.headers.set("X-Frame-Options", "DENY");
 
-  const isAuthPage =
+  // 2. Direct Session Check (Next.js 16 Proxy runs on Node.js by default)
+  // We use the direct API to avoid internal HTTP overhead and leverage Node 24 performance
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  // 3. Routing Logic
+  const isAuthRoute =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/two-factor");
 
-  const isAdminPage = pathname.startsWith("/admin");
-  const isUserPage = pathname.startsWith("/account");
+  const isProtectedRoute =
+    pathname.startsWith("/admin") || pathname.startsWith("/account");
 
-  const sessionToken =
-    request.cookies.get("better-auth.session_token") ||
-    request.cookies.get("__Secure-better-auth.session_token");
-
-  // Not logged in — redirect to login
-  if (!sessionToken && (isAdminPage || isUserPage)) {
+  // Redirect unauthenticated users from protected areas
+  if (isProtectedRoute && !session) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Prevent logged-in users from accessing auth pages (login, signup, etc.)
-  // EXCEPTION: /two-factor MUST be accessible even with a session token,
-  // as it is part of the login completion flow.
-  if (sessionToken && isAuthPage && !pathname.startsWith("/two-factor")) {
+  // Prevent logged-in users from accessing auth pages (except 2FA flow)
+  if (isAuthRoute && session && !pathname.startsWith("/two-factor")) {
     return NextResponse.redirect(new URL("/account", request.url));
   }
 
-  // Protected Admin routes
-  if (pathname.startsWith("/admin")) {
-    // We fetch the session to check the role. 
-    // The ADMIN_EMAIL is also checked as a fallback for the primary account.
-    const res = await fetch(`${request.nextUrl.origin}/api/auth/get-session`, {
-      headers: { cookie: request.headers.get("cookie") || "" },
-    });
-    const session = await res.json();
-
-    const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL("/account", request.url));
-    }
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
-
 export const config = {
+  // Optimal Matcher: Skips static assets and internal paths for performance
   matcher: [
-    "/admin/:path*",
-    "/account/:path*",
-    "/login",
-    "/signup",
-    "/forgot-password",
-    "/reset-password",
-    "/two-factor",
+    "/((?!api|_next/static|_next/image|favicon.ico|public|.*\\..*).*)",
   ],
 };
-
-export default proxy;
