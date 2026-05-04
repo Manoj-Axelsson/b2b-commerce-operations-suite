@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
+import { cn, formatCurrency } from "@/lib/utils";
 import { DeleteProductButton } from "./DeleteProductButton";
 import { ToggleVisibilityButton } from "./ToggleVisibilityButton";
 
@@ -41,7 +42,8 @@ export default async function AdminProductsPage() {
               <th className="p-4">Product</th>
               <th className="p-4">Category</th>
               <th className="p-4 text-center">Stock</th>
-              <th className="p-4 text-right">Price (öre)</th>
+              <th className="p-4 text-right">Price (SEK)</th>
+              <th className="p-4">Offers & Promotions</th>
               <th className="p-4 text-center">Visibility</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
@@ -81,17 +83,50 @@ export default async function AdminProductsPage() {
 
                   <td className="p-4 text-center">
                     <span className={`font-bold text-xs ${product.quantity <= 0
-                        ? "text-red-600"
-                        : product.quantity <= product.minQuantity
-                          ? "text-orange-500"
-                          : "text-green-700"
+                      ? "text-red-600"
+                      : product.quantity <= product.minQuantity
+                        ? "text-orange-500"
+                        : "text-green-700"
                       }`}>
                       {product.quantity}
                     </span>
                     <span className="text-gray-300 text-xs"> / {product.minQuantity} min</span>
                   </td>
 
-                  <td className="p-4 text-right font-mono text-gray-700">{product.price}</td>
+                  <td className="p-4 text-right font-mono text-gray-700 whitespace-nowrap">
+                    {formatCurrency(product.price)}
+                  </td>
+
+                  <td className="p-4">
+                    {(() => {
+                      const now = new Date();
+                      const isActive = product.discountPrice && 
+                        (!product.discountStart || now >= product.discountStart) && 
+                        (!product.discountEnd || now <= product.discountEnd);
+
+                      if (!isActive) {
+                        return <span className="text-gray-300 text-[10px] italic">No active offer</span>;
+                      }
+
+                      return (
+                        <div className="space-y-1">
+                          <div className={cn(
+                            "text-[10px] px-2 py-0.5 rounded border inline-block uppercase font-bold",
+                            product.discountType === "CLEARANCE" ? "bg-red-100 text-red-700 border-red-200" :
+                            product.discountType === "PROMOTION" ? "bg-green-100 text-green-700 border-green-200" :
+                            "bg-blue-100 text-blue-700 border-blue-200"
+                          )}>
+                            {product.discountType?.replace("_", " ")}
+                          </div>
+                          {product.discountStart && product.discountEnd && (
+                            <div className="text-[10px] text-gray-400 leading-tight">
+                              {product.discountStart.toLocaleDateString()} to {product.discountEnd.toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </td>
 
                   <td className="p-4 text-center">
                     <ToggleVisibilityButton id={product.id} isActive={product.isActive} />

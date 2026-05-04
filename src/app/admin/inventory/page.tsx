@@ -1,22 +1,49 @@
 import prisma from "@/lib/prisma";
 import { StockButton } from "@/components/admin/StockButton";
-import { NotificationStatus } from "./types/schema";
+import { cn } from "@/lib/utils";
+import { PromotionAlert } from "./types/schema";
 
 // Logic for 3-day window notifications (Offers starting or ending)
 
-function getPromotionNotification(start: Date | null, end: Date | null): NotificationStatus {
-  if (!start || !end) return "STABLE";
+function formatMsRemaining(ms: number): string {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  
+  const hLabel = hours === 1 ? "one hour" : `${hours} hours`;
+  const mLabel = minutes === 1 ? "one minute" : `${minutes} minutes`;
+
+  if (hours > 0) return `${hLabel} and ${mLabel}`;
+  return mLabel;
+}
+
+function getPromotionNotification(start: Date | null, end: Date | null): PromotionAlert {
+  if (!start || !end) return { status: "STABLE" };
   const now = new Date();
   const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+  const eightHoursInMs = 8 * 60 * 60 * 1000;
 
   const msToStart = start.getTime() - now.getTime();
   const msToEnd = end.getTime() - now.getTime();
 
-  if (msToStart > 0 && msToStart <= threeDaysInMs) return "STARTING_SOON";
-  if (msToEnd > 0 && msToEnd <= threeDaysInMs) return "ENDING_SOON";
-  if (now > end) return "EXPIRED";
+  if (msToStart > 0 && msToStart <= threeDaysInMs) {
+    return {
+      status: "STARTING_SOON",
+      msRemaining: msToStart,
+      isUrgent: msToStart <= eightHoursInMs
+    };
+  }
 
-  return "STABLE";
+  if (msToEnd > 0 && msToEnd <= threeDaysInMs) {
+    return {
+      status: "ENDING_SOON",
+      msRemaining: msToEnd,
+      isUrgent: msToEnd <= eightHoursInMs
+    };
+  }
+
+  if (now > end) return { status: "EXPIRED" };
+
+  return { status: "STABLE" };
 }
 
 function getStockStatus(quantity: number, minQuantity: number) {
@@ -35,8 +62,8 @@ export default async function AdminInventoryPage() {
   // Filter for products that have a 3-day notification (Starting or Ending)
 
   const priorityPromotions = products.filter((p) => {
-    const status = getPromotionNotification(p.discountStart, p.discountEnd);
-    return status === "STARTING_SOON" || status === "ENDING_SOON";
+    const alert = getPromotionNotification(p.discountStart, p.discountEnd);
+    return alert.status === "STARTING_SOON" || alert.status === "ENDING_SOON";
   });
 
   return (
@@ -59,17 +86,32 @@ export default async function AdminInventoryPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {priorityPromotions.map((p) => {
-              const status = getPromotionNotification(p.discountStart, p.discountEnd);
+              const alert = getPromotionNotification(p.discountStart, p.discountEnd);
+              const isUrgent = alert.isUrgent;
+
               return (
-                <div key={p.id} className="bg-white p-3 rounded shadow-sm border border-amber-100 flex justify-between items-center">
+                <div key={p.id} className={cn(
+                  "bg-white p-3 rounded shadow-sm border flex justify-between items-center transition-all",
+                  isUrgent ? "border-red-400 ring-2 ring-red-100 animate-pulse" : "border-amber-100"
+                )}>
                   <div>
                     <p className="font-medium text-sm">{p.name}</p>
                     <p className="text-xs text-gray-500">{p.brand}</p>
                   </div>
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${status === "STARTING_SOON" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
-                    }`}>
-                    {status.replace("_", " ")}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={cn(
+                      "px-2 py-1 rounded text-[10px] font-bold uppercase",
+                      alert.status === "STARTING_SOON" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700",
+                      isUrgent && "bg-red-600 text-white"
+                    )}>
+                      {alert.status.replace("_", " ")}
+                    </span>
+                    {alert.msRemaining && (
+                      <span className="text-[10px] font-mono text-gray-400">
+                        {isUrgent ? "URGENT: " : ""}{formatMsRemaining(alert.msRemaining)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
