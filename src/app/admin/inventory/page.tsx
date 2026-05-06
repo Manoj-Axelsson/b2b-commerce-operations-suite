@@ -2,13 +2,16 @@ import prisma from "@/lib/prisma";
 import { StockButton } from "@/components/admin/StockButton";
 import { cn } from "@/lib/utils";
 import { PromotionAlert } from "./types/schema";
+import { Suspense } from "react";
+import { InventoryFilters } from "./components/InventoryFilters";
+import Link from "next/link";
 
 // Logic for 3-day window notifications (Offers starting or ending)
 
 function formatMsRemaining(ms: number): string {
   const hours = Math.floor(ms / (1000 * 60 * 60));
   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   const hLabel = hours === 1 ? "one hour" : `${hours} hours`;
   const mLabel = minutes === 1 ? "one minute" : `${minutes} minutes`;
 
@@ -41,6 +44,10 @@ function getPromotionNotification(start: Date | null, end: Date | null): Promoti
     };
   }
 
+  if (now >= start && now <= end) {
+    return { status: "ACTIVE" };
+  }
+
   if (now > end) return { status: "EXPIRED" };
 
   return { status: "STABLE" };
@@ -52,19 +59,64 @@ function getStockStatus(quantity: number, minQuantity: number) {
   return "OK";
 }
 
-export default async function AdminInventoryPage() {
+interface AdminInventoryPageProps {
+  searchParams: Promise<{
+    name?: string;
+    sort?: string;
+    category?: string;
+    page?: string;
+  }>;
+}
+
+export default async function AdminInventoryPage({ searchParams }: AdminInventoryPageProps) {
+  const params = await searchParams;
+  const { name = "", sort = "", category = "", page = "1" } = params;
+  const currentPage = parseInt(page, 10) || 1;
+  const pageSize = 50;
+
+  // 1. Fetch only essential data for alerts and categories
+  // We fetch ALL active products but only specific fields to calculate alerts without heavy overhead
+  const [allRelevantProducts, categories, totalCount] = await Promise.all([
+    prisma.product.findMany({
+      where: { isDeleted: false },
+      select: { 
+        id: true, name: true, brand: true, articleNo: true,
+        quantity: true, minQuantity: true, 
+        discountStart: true, discountEnd: true 
+      },
+    }),
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.product.count({
+      where: {
+        isDeleted: false,
+        ...(name ? { name: { contains: name, mode: "insensitive" } } : {}),
+        ...(category ? { categoryId: category } : {}),
+      },
+    }),
+  ]);
+
+  // 2. Fetch the paginated products for the table
   const products = await prisma.product.findMany({
-    orderBy: { name: "asc" },
+    where: {
+      isDeleted: false,
+      ...(name ? { name: { contains: name, mode: "insensitive" } } : {}),
+      ...(category ? { categoryId: category } : {}),
+    },
+    orderBy: 
+      sort === "price_asc" ? { price: "asc" } :
+      sort === "price_desc" ? { price: "desc" } :
+      { name: "asc" },
+    take: pageSize,
+    skip: (currentPage - 1) * pageSize,
   });
 
-  const restockNeeded = products.filter((p) => p.quantity <= p.minQuantity);
-
-  // Filter for products that have a 3-day notification (Starting or Ending)
-
-  const priorityPromotions = products.filter((p) => {
+  const restockNeeded = allRelevantProducts.filter((p) => p.quantity <= p.minQuantity);
+  const priorityPromotions = allRelevantProducts.filter((p) => {
     const alert = getPromotionNotification(p.discountStart, p.discountEnd);
-    return alert.status === "STARTING_SOON" || alert.status === "ENDING_SOON";
+    return alert.status === "STARTING_SOON" || alert.status === "ENDING_SOON" || alert.status === "ACTIVE";
   });
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <main className="p-6 space-y-8">
@@ -77,37 +129,53 @@ export default async function AdminInventoryPage() {
         </div>
       </div>
 
+      <Suspense fallback={<div className="h-16 bg-gray-100 animate-pulse rounded-lg" />}>
+        <InventoryFilters categories={categories} />
+      </Suspense>
+
       {/* NEW SECTION: Promotion Alerts (The 3-Day Rule) */}
 
       {priorityPromotions.length > 0 && (
         <section className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-          <h2 className="text-lg font-bold text-amber-800 mb-3 flex items-center gap-2">
-            Promotion Alerts (3-Day Window)
+          <h2 className="text-lg font-bold text-amber-800 mb-3 flex items-center justify-center gap-2">
+            Promotion Alerts
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-2 max-w-2xl mx-auto">
             {priorityPromotions.map((p) => {
               const alert = getPromotionNotification(p.discountStart, p.discountEnd);
               const isUrgent = alert.isUrgent;
 
               return (
                 <div key={p.id} className={cn(
-                  "bg-white p-3 rounded shadow-sm border flex justify-between items-center transition-all",
+                  "bg-white p-2 px-4 rounded shadow-sm border flex items-center gap-4 transition-all w-full",
                   isUrgent ? "border-red-400 ring-2 ring-red-100 animate-pulse" : "border-amber-100"
                 )}>
-                  <div>
-                    <p className="font-medium text-sm">{p.name}</p>
-                    <p className="text-xs text-gray-500">{p.brand}</p>
+                  {/* Bullet Point */}
+                  <div className={cn(
+                    "w-2 h-2 rounded-full shrink-0",
+                    isUrgent ? "bg-red-500" : "bg-amber-400"
+                  )} />
+                  
+                  <div className="flex-1">
+                    <p className="font-medium text-sm inline-block mr-2">{p.name}</p>
+                    <span className="text-xs text-gray-400">{p.brand}</span>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+
+                  <div className="flex items-center gap-4">
                     <span className={cn(
-                      "px-2 py-1 rounded text-[10px] font-bold uppercase",
-                      alert.status === "STARTING_SOON" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700",
+                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                      alert.status === "STARTING_SOON" ? "bg-blue-100 text-blue-700" : 
+                      alert.status === "ENDING_SOON" ? "bg-orange-100 text-orange-700" :
+                      "bg-green-100 text-green-700",
                       isUrgent && "bg-red-600 text-white"
                     )}>
                       {alert.status.replace("_", " ")}
                     </span>
                     {alert.msRemaining && (
-                      <span className="text-[10px] font-mono text-gray-400">
+                      <span className={cn(
+                        "text-[10px] font-mono min-w-[120px] text-right",
+                        isUrgent ? "font-bold text-black" : "text-gray-400"
+                      )}>
                         {isUrgent ? "URGENT: " : ""}{formatMsRemaining(alert.msRemaining)}
                       </span>
                     )}
@@ -152,6 +220,33 @@ export default async function AdminInventoryPage() {
           </table>
         </div>
       </section>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 pt-4 pb-8">
+          <Link
+            href={`/admin/inventory?${new URLSearchParams({ ...params, page: (currentPage - 1).toString() })}`}
+            className={cn(
+              "px-4 py-2 border rounded-lg text-sm font-medium transition-colors",
+              currentPage <= 1 ? "pointer-events-none opacity-50 bg-gray-50" : "hover:bg-gray-100"
+            )}
+          >
+            Previous
+          </Link>
+          <span className="text-sm font-medium">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Link
+            href={`/admin/inventory?${new URLSearchParams({ ...params, page: (currentPage + 1).toString() })}`}
+            className={cn(
+              "px-4 py-2 border rounded-lg text-sm font-medium transition-colors",
+              currentPage >= totalPages ? "pointer-events-none opacity-50 bg-gray-50" : "hover:bg-gray-100"
+            )}
+          >
+            Next
+          </Link>
+        </div>
+      )}
 
     </main>
   );

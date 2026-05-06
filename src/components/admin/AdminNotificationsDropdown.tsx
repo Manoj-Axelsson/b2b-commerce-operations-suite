@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export interface DetailedPromotionAlert {
   productId: string;
@@ -32,11 +33,19 @@ interface NotificationItem {
   icon: string;
 }
 
-// Client component — receives pre-fetched counts from the Server Component parent.
-// Renders a bell icon badge in the sidebar and a dropdown panel on click.
 export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [showPeek, setShowPeek] = useState(true);
   const [hasViewed, setHasViewed] = useState(false);
+
+  // Auto-fade the initial "peek" after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPeek(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const totalAlerts =
     counts.lowStock +
@@ -71,7 +80,6 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
     },
   ];
 
-  // Add each promotion as a separate notification item
   counts.detailedPromotions.forEach((promo) => {
     notifications.push({
       id: `promo-${promo.productId}-${promo.eventType}`,
@@ -83,19 +91,21 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
     });
   });
 
-  // Only show items with at least one alert
   const activeNotifications = notifications.filter((n) => n.count > 0);
 
   const handleToggle = () => {
-    setIsOpen((prev) => {
-      const next = !prev;
-      if (next) setHasViewed(true);
-      return next;
-    });
+    setIsOpen(!isOpen);
+    setHasViewed(true);
   };
 
+  const shouldBeVisible = (isOpen || isHovered || showPeek) && activeNotifications.length > 0;
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <button
         id="admin-notifications-button"
         onClick={handleToggle}
@@ -103,7 +113,6 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
         aria-expanded={isOpen}
         className="flex items-center gap-2 w-full px-2 py-2 rounded-md hover:bg-yellow-100 transition-colors text-yellow-800"
       >
-        {/* Bell icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -132,37 +141,43 @@ export const AdminNotificationsDropdown = ({ counts }: AdminNotificationsDropdow
         )}
       </button>
 
-      {isOpen && (
-        <div
-          role="menu"
-          aria-label="Admin notifications"
-          className="absolute left-full top-0 ml-2 w-72 bg-white border border-yellow-200 rounded-lg shadow-xl z-50 py-2"
-        >
-          <p className="px-4 py-1 text-xs font-bold text-yellow-700 uppercase tracking-wider border-b border-yellow-100 mb-1">
-            Alert Centre
-          </p>
+      <div
+        role="menu"
+        aria-label="Admin notifications"
+        className={cn(
+          "absolute left-full top-0 ml-2 w-72 bg-white border border-yellow-200 rounded-lg shadow-xl z-50 py-2 transition-all duration-500 ease-in-out transform",
+          shouldBeVisible
+            ? "opacity-100 translate-x-0 pointer-events-auto"
+            : "opacity-0 -translate-x-4 pointer-events-none"
+        )}
+      >
+        <p className="px-4 py-1 text-xs font-bold text-yellow-700 uppercase tracking-wider border-b border-yellow-100 mb-1">
+          Alert Centre
+        </p>
 
-          {activeNotifications.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-gray-500 italic">
-              All clear — no alerts right now.
-            </p>
-          ) : (
-            activeNotifications.map((n) => (
-              <Link
-                key={n.id}
-                href={n.href}
-                role="menuitem"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-yellow-50 transition-colors"
-              >
-                <span aria-hidden="true" className="text-base">{n.icon}</span>
-                <span className="flex-1 text-sm text-slate-800">{n.label}</span>
-                <span className={`text-sm font-bold ${n.color}`}>{n.count}</span>
-              </Link>
-            ))
-          )}
-        </div>
-      )}
+        {activeNotifications.length === 0 ? (
+          <p className="px-4 py-3 text-sm text-gray-500 italic">
+            All clear — no alerts right now.
+          </p>
+        ) : (
+          activeNotifications.map((n) => (
+            <Link
+              key={n.id}
+              href={n.href}
+              role="menuitem"
+              onClick={() => {
+                setIsOpen(false);
+                setIsHovered(false);
+              }}
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-yellow-50 transition-colors"
+            >
+              <span aria-hidden="true" className="text-base">{n.icon}</span>
+              <span className="flex-1 text-sm text-slate-800">{n.label}</span>
+              <span className={`text-sm font-bold ${n.color}`}>{n.count}</span>
+            </Link>
+          ))
+        )}
+      </div>
     </div>
   );
 };

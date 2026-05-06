@@ -79,7 +79,7 @@ export const AdminProductUpdateSchema = BaseProductSchema.superRefine((data, ctx
 });
 
 // NotificationStatus Type for the 3-day rule.
-export type NotificationStatus = 'STABLE' | 'STARTING_SOON' | 'ENDING_SOON' | 'EXPIRED';
+export type NotificationStatus = 'STABLE' | 'STARTING_SOON' | 'ENDING_SOON' | 'EXPIRED' | 'ACTIVE';
 
 // Detailed alert structure for promotions
 export interface PromotionAlert {

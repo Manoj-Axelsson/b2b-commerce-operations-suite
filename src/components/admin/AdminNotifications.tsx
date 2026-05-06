@@ -28,13 +28,15 @@ const getIn3Days = (): Date => {
 // so we fetch all non-deleted products and filter in JS.
 // The inventory dataset is small so this is acceptable.
 const countLowStockProducts = async (): Promise<number> => {
+  // Use a targeted selection to minimize data transfer
   const products = await prisma.product.findMany({
     where: { isDeleted: false, isActive: true },
     select: { quantity: true, minQuantity: true },
   });
 
-  const lowStockItems = products.filter((p) => p.quantity <= p.minQuantity);
-  return lowStockItems.length;
+  // Since Prisma doesn't support field-to-field comparison directly in the where clause 
+  // without raw queries, we filter in JS but keep the payload tiny.
+  return products.filter((p) => p.quantity <= p.minQuantity).length;
 };
 
 // Pending member approvals (non-admin users who haven't been approved yet)
