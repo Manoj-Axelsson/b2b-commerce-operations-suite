@@ -47,8 +47,9 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                             priority={priority}
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-brand-border">
-                            <span className="text-4xl font-serif tracking-tighter italic">Rajput</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-linear-to-br from-brand-cream to-white text-brand-primary/20">
+                            <span className="text-5xl font-serif tracking-tighter italic leading-none">Rajput</span>
+                            <span className="text-[0.6rem] font-bold uppercase tracking-[0.5em] mt-1 ml-2 opacity-50">Foods</span>
                         </div>
                     )}
 
