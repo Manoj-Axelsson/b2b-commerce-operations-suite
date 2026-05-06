@@ -29,8 +29,7 @@ interface NavbarClientProps {
 function buildLinks(isLoggedIn: boolean, isAdmin: boolean): NavLink[] {
   const links: NavLink[] = [{ href: "/shop", label: "Shop" }];
 
-  // My Account is hidden for admins — they operate through the Admin panel
-  if (isLoggedIn && !isAdmin) {
+  if (isLoggedIn) {
     links.push({ href: "/account", label: "My Account" });
   }
 
@@ -202,7 +201,7 @@ export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: Na
             )}
 
             {/* Cart icon — far right, after auth buttons */}
-            <div className="ml-4">
+            <div className="">
               <NavbarCartButton isAdmin={isAdmin} isApproved={isApproved} />
             </div>
           </div>
@@ -219,31 +218,31 @@ export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: Na
               aria-controls="navbar-mobile-menu"
               className="flex items-center justify-center w-10 h-10 rounded-md text-white hover:text-brand-gold transition-colors duration-200"
             >
-            {isMenuOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-6 h-6"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-6 h-6"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            )}
+              {isMenuOpen ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              )}
             </button>
           </div>
         </div>

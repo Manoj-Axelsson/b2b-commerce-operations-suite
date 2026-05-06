@@ -1,80 +1,21 @@
-"use client";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import prisma from "@/lib/prisma";
+import { LogoutButton } from "./LogoutButton";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/Button";
+export default async function AccountPage() {
+  const session = await getSession();
 
-type User = {
-  id: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-  role?: string | null;
-  isApproved?: boolean;
-};
-
-export default function AccountPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const res = await fetch("/api/user");
-
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        if (!res.ok) {
-          console.error("Failed to fetch user");
-          return;
-        }
-
-        const userData = await res.json();
-        console.log("DEBUG: Account User Data:", userData);
-
-        // Redirect admins to the admin area. Using /admin (not
-        // /admin/dashboard, which does not exist) lets the admin root
-        // page decide the concrete landing route.
-        if (userData.role === "admin") {
-          router.push("/admin");
-          return;
-        }
-
-        setUser(userData);
-      } catch (err) {
-        console.error("Error loading user", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
-  }, [router]);
-
-  const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/login");
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
+  if (!session) {
+    redirect("/login");
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Something went wrong. Please try again.</p>
-      </div>
-    );
+    throw new Error("User not found");
   }
 
   return (
@@ -97,9 +38,7 @@ export default function AccountPage() {
           </div>
         )}
 
-        <div className="flex gap-3">
-          <Button onClick={handleLogout}>Logout</Button>
-        </div>
+        <LogoutButton />
       </div>
     </div>
   );

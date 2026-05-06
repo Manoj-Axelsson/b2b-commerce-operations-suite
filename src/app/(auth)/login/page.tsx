@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { AuthForm } from "@/components/forms/AuthForm";
 import { FormField } from "@/components/forms/FormField";
 
 export default function LoginPage() {
-  const router = useRouter();
 
   const [form, setForm] = useState({
     email: "",
@@ -46,12 +44,13 @@ export default function LoginPage() {
     // to /admin/inventory, so pointing there avoids hard-coding the
     // current landing route — if we add a real dashboard later, the
     // redirect chain changes in one place.
+    // Full reload — forces the root layout to re-render server-side with the
+    // correct session. Client-side router.push() would reuse the cached layout,
+    // leaving the Navbar showing the pre-login (unauthenticated) state.
     if (user.role === "admin") {
-      router.refresh();
-      router.push("/admin");
+      window.location.href = "/admin";
     } else {
-      router.refresh();
-      router.push("/shop");
+      window.location.href = "/shop";
     }
   };
 

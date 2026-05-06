@@ -2,14 +2,15 @@
 // Server Component — fetches the user session and categories,
 // and passes both to NavbarClient which handles interactivity.
 
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { NavbarClient } from "./NavbarClient";
+import type { NavbarSession } from "@/lib/session";
 
-export default async function Navbar() {
-  const session = await auth.api.getSession({ headers: await headers() });
+interface NavbarProps {
+  session: NavbarSession;
+}
 
+export default async function Navbar({ session }: NavbarProps) {
   const isLoggedIn = !!session?.user;
   const isAdmin = session?.user?.role === "admin";
 
@@ -18,9 +19,9 @@ export default async function Navbar() {
   const userId = session?.user?.id;
   const userData = userId
     ? await prisma.user.findUnique({
-        where: { id: userId },
-        select: { isApproved: true },
-      })
+      where: { id: userId },
+      select: { isApproved: true },
+    })
     : null;
   const isApproved = userData?.isApproved ?? false;
 
