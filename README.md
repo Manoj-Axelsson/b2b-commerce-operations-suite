@@ -35,8 +35,7 @@ src/
 │   │   ├── components/     # Feature-specific components
 │   │   ├── types/          # TypeScript interfaces
 │   │   └── page.tsx        # Route entry point
-│   ├── proxy.ts            # Edge middleware / route protection
-│   └── layout.tsx          # Global layout
+│   │   └── layout.tsx          # Global layout
 │
 ├── components/             # Shared React components
 │   ├── ui/                 # shadcn/ui components (auto-generated)
@@ -54,7 +53,7 @@ src/
 ├── types/                  # Shared TypeScript types
 └── generated/prisma/       # Generated Prisma client (do not edit)
 ```
-
+[ Middleware Proxy has been removed from the stack as of 4th May 2026 for data protection concerns ]
 ---
 
 ## Getting Started
