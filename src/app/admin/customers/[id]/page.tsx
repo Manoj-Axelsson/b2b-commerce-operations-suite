@@ -2,6 +2,7 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { formatCurrency } from "@/lib/utils";
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -94,7 +95,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                                   {item.productName}
                                 </td>
                                 <td className="py-2 px-2 text-gray-400">x{item.quantity}</td>
-                                <td className="py-2 pl-2 text-right font-medium">{item.price * item.quantity} kr</td>
+                                <td className="py-2 pl-2 text-right font-medium">{formatCurrency(Number(item.price) * item.quantity)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -110,7 +111,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       </span>
                       <div className="text-sm">
                         <span className="text-gray-400 mr-1 text-xs uppercase font-bold">Sum:</span>
-                        <span className="font-bold text-gray-900">{order.totalPrice} kr</span>
+                        <span className="font-bold text-gray-900">{formatCurrency(Number(order.totalPrice))}</span>
                       </div>
                     </div>
                   </div>

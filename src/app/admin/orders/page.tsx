@@ -142,7 +142,7 @@ export default async function AdminOrdersPage() {
                       <td className="p-3 text-gray-800">{item.productName}</td>
                       <td className="p-3 text-center text-gray-600">{item.quantity}</td>
                       <td className="p-3 text-right text-gray-700 font-medium">
-                        {formatCurrency(item.price * item.quantity)}
+                        {formatCurrency(Number(item.price) * item.quantity)}
                       </td>
                     </tr>
                   ))}
@@ -153,7 +153,7 @@ export default async function AdminOrdersPage() {
                       Total
                     </td>
                     <td className="p-3 text-right font-bold text-gray-900">
-                      {formatCurrency(order.totalPrice)}
+                      {formatCurrency(Number(order.totalPrice))}
                     </td>
                   </tr>
                 </tfoot>

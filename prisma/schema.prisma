@@ -297,13 +297,13 @@ model OrderAdjustment {
 
   orderId String
 
-  type String
+  type AdjustmentType
 
-  description String
+  description String?
 
   amount Decimal @db.Decimal(10, 2)
 
-  createdBy String
+  createdBy String?
 
   createdAt DateTime @default(now())
 
