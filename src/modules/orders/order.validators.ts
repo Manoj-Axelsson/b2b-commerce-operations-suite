@@ -5,7 +5,7 @@ export const orderIdSchema = z.string().uuid("Invalid order ID format");
 
 export const updateStatusSchema = z.object({
   orderId: orderIdSchema,
-  nextStatus: z.nativeEnum(OrderStatus),
+  nextStatus: z.enum(OrderStatus),
   notes: z.string().max(500, "Notes cannot exceed 500 characters").optional(),
 });
 

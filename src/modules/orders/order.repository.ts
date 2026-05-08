@@ -50,21 +50,17 @@ export const orderRepository = {
   },
 
   /**
-   * Updates only the status of an order.
+   * Updates an order with provided data.
    */
-  async updateStatus(
+  async update(
     id: string,
-    status: OrderStatus,
+    data: Prisma.OrderUpdateInput,
     tx?: Prisma.TransactionClient
   ) {
     const client = tx || prisma;
     return client.order.update({
       where: { id },
-      data: {
-        status,
-        ...(status === OrderStatus.SHIPPED ? { shippedAt: new Date() } : {}),
-        ...(status === OrderStatus.DELIVERED ? { deliveredAt: new Date() } : {}),
-      },
+      data,
     });
   },
 

@@ -36,10 +36,21 @@ export async function updateOrderStatus(
       );
     }
 
-    // 4. Perform update via repository
-    const updatedOrder = await orderRepository.updateStatus(
+    // 4. Prepare update data
+    const updateData: any = { status: validated.nextStatus };
+    
+    if (validated.nextStatus === OrderStatus.SHIPPED) {
+      updateData.shippedAt = new Date();
+    }
+    
+    if (validated.nextStatus === OrderStatus.DELIVERED) {
+      updateData.deliveredAt = new Date();
+    }
+
+    // 5. Perform update via repository
+    const updatedOrder = await orderRepository.update(
       validated.orderId,
-      validated.nextStatus,
+      updateData,
       tx
     );
 
