@@ -3,7 +3,7 @@ import { ORDER_TRANSITIONS } from "./order.machine";
 import { orderRepository } from "./order.repository";
 import { updateStatusSchema } from "./order.validators";
 import { UpdateStatusParams, OrderWithHistory } from "./order.types";
-import { OrderStatus } from "@/generated/prisma/client";
+import { OrderStatus, Prisma } from "@/generated/prisma/client";
 
 /**
  * Service to orchestrate order status updates.
@@ -33,7 +33,7 @@ export async function updateOrderStatus({
     }
 
     // 4. Data Preparation (Explicit logic)
-    const updateData: any = { status: validated.nextStatus };
+    const updateData: Prisma.OrderUpdateInput = { status: validated.nextStatus };
     if (validated.nextStatus === OrderStatus.SHIPPED) updateData.shippedAt = new Date();
     if (validated.nextStatus === OrderStatus.DELIVERED) updateData.deliveredAt = new Date();
 
