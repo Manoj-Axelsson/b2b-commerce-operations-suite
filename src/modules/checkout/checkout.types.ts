@@ -1,4 +1,4 @@
-import { Order, OrderStatus, PaymentStatus } from "@/generated/prisma/client";
+import { Order } from "@/generated/prisma/client";
 
 export interface CreateOrderFromCartInput {
   userId: string;

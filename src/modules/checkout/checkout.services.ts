@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { OrderStatus, PaymentStatus, Prisma } from "@/generated/prisma/client";
+import { OrderStatus, PaymentStatus } from "@/generated/prisma/client";
 import { createOrderFromCartSchema } from "./checkout.validators";
 import { CheckoutLineSnapshot, CheckoutOrder, CreateOrderFromCartInput } from "./checkout.types";
 
@@ -96,13 +96,19 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
         subtotalPrice,
         adjustmentTotal: 0,
         totalPrice,
+        // Delivery Snapshots (Mandatory in schema)
         deliveryStreet: normalizeStreet(address.street, address.houseNumber),
+        deliveryCity: address.city,
+        deliveryPostalCode: address.postalCode,
+        deliveryCountry: address.country,
         items: {
           create: lineSnapshots.map((snap) => ({
             productId: snap.productId,
+            productName: snap.productName,
+            sku: snap.sku,
             quantity: snap.quantity,
-            unitPrice: snap.unitPrice,
-            totalPrice: snap.lineTotal,
+            price: snap.unitPrice, // Schema uses 'price'
+            lineTotal: snap.lineTotal,
           })),
         },
       },
