@@ -49,6 +49,7 @@ export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: Na
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
   const pathname = usePathname();
 
   // Landing page has its own branded layout — no navbar rendered there
@@ -129,28 +130,30 @@ export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: Na
                     <div
                       role="menu"
                       aria-label="Shop categories"
-                      className="absolute top-full left-0 mt-1 w-52 bg-brand-primary border border-brand-gold/20 rounded-md shadow-xl py-1 z-50"
+                      className="absolute top-full left-0 w-52 pt-1 z-50"
                     >
-                      <Link
-                        href="/shop"
-                        role="menuitem"
-                        onClick={() => setIsShopOpen(false)}
-                        className="block px-4 py-2 text-xs font-bold text-brand-gold uppercase tracking-widest hover:bg-white/5 transition-colors"
-                      >
-                        All Products
-                      </Link>
-                      <div className="border-t border-brand-gold/20 my-1" />
-                      {categories.map((cat) => (
+                      <div className="bg-brand-primary border border-brand-gold/20 rounded-md shadow-xl py-1 overflow-hidden">
                         <Link
-                          key={cat.id}
-                          href={`/shop?category=${cat.id}`}
+                          href="/shop"
                           role="menuitem"
                           onClick={() => setIsShopOpen(false)}
-                          className="block px-4 py-2 text-sm text-white/80 hover:text-brand-gold hover:bg-white/5 transition-colors capitalize"
+                          className="block px-4 py-2 text-xs font-bold text-brand-gold uppercase tracking-widest hover:bg-white/5 transition-colors"
                         >
-                          {cat.name}
+                          All Products
                         </Link>
-                      ))}
+                        <div className="border-t border-brand-gold/20 my-1" />
+                        {categories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            href={`/shop?category=${cat.id}`}
+                            role="menuitem"
+                            onClick={() => setIsShopOpen(false)}
+                            className="block px-4 py-2 text-sm text-white/80 hover:text-brand-gold hover:bg-white/5 transition-colors capitalize"
+                          >
+                            {cat.name}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -260,24 +263,54 @@ export function NavbarClient({ isAdmin, isLoggedIn, isApproved, categories }: Na
             {/* Nav links — Shop expands to show categories on mobile */}
             {links.map((link) => (
               <div key={link.href}>
-                <Link
-                  id={`navbar-mobile-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
-                  href={link.href}
-                  role="menuitem"
-                  onClick={closeMenu}
-                  className={cn(
-                    "block px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md transition-colors duration-200",
-                    isActive(pathname, link.href)
-                      ? "text-brand-gold bg-white/5"
-                      : "text-white/80 hover:text-brand-gold hover:bg-white/5"
-                  )}
-                >
-                  {link.label}
-                </Link>
+                {link.label === "Shop" ? (
+                  <button
+                    onClick={() => setIsMobileShopOpen(!isMobileShopOpen)}
+                    className={cn(
+                      "flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md transition-colors duration-200",
+                      isActive(pathname, link.href)
+                        ? "text-brand-gold bg-white/5"
+                        : "text-white/80 hover:text-brand-gold hover:bg-white/5"
+                    )}
+                  >
+                    <span>{link.label}</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className={cn("w-4 h-4 transition-transform duration-200", isMobileShopOpen && "rotate-180")}
+                    >
+                      <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                ) : (
+                  <Link
+                    id={`navbar-mobile-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
+                    href={link.href}
+                    role="menuitem"
+                    onClick={closeMenu}
+                    className={cn(
+                      "block px-3 py-2.5 text-sm font-medium uppercase tracking-widest rounded-md transition-colors duration-200",
+                      isActive(pathname, link.href)
+                        ? "text-brand-gold bg-white/5"
+                        : "text-white/80 hover:text-brand-gold hover:bg-white/5"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                )}
 
-                {/* Category links nested under Shop */}
-                {link.label === "Shop" && categories.length > 0 && (
-                  <div className="pl-4 mt-1 space-y-1 border-l border-brand-gold/20 ml-3">
+                {/* Category links nested under Shop (Mobile Accordion) */}
+                {link.label === "Shop" && isMobileShopOpen && categories.length > 0 && (
+                  <div className="pl-4 mt-1 space-y-1 border-l border-brand-gold/20 ml-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <Link
+                      href="/shop"
+                      role="menuitem"
+                      onClick={closeMenu}
+                      className="block px-3 py-1.5 text-xs font-bold text-brand-gold/80 hover:text-brand-gold uppercase tracking-widest transition-colors"
+                    >
+                      All Products
+                    </Link>
                     {categories.map((cat) => (
                       <Link
                         key={cat.id}
