@@ -23,8 +23,9 @@ export async function processCheckoutAction(formData: FormData) {
     
     // Redirect to a success page or back to account orders
     return { success: true, orderId: order.id };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "An unexpected error occurred";
+    return { success: false, error: message };
   }
 }
 
@@ -51,7 +52,8 @@ export async function saveAddressAction(formData: FormData) {
 
     revalidatePath("/shop/checkout");
     return { success: true, addressId: address.id };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to save address";
+    return { success: false, error: message };
   }
 }

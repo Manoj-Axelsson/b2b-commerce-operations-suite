@@ -6,8 +6,18 @@ import { processCheckoutAction, saveAddressAction } from "@/app/actions/checkout
 import { useRouter } from "next/navigation";
 import { Address } from "@/generated/prisma/client";
 
+interface CartItem {
+  productId: string;
+  product: {
+    name: string;
+    price: number;
+    articleNo: string;
+  };
+  quantity: number;
+}
+
 interface CheckoutClientProps {
-  items: any[];
+  items: CartItem[];
   totalPrice: number;
   addresses: Address[];
 }
