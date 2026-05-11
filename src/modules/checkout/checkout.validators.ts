@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createOrderFromCartSchema = z.object({
-  userId: z.string().uuid("Invalid User ID"),
+  userId: z.string().min(1, "User ID is required"),
   addressId: z.string().uuid("Invalid Address ID"),
 });
 
