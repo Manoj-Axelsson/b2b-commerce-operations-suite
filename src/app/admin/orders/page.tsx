@@ -10,10 +10,11 @@ import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { updateOrderStatus } from "./actions";
-type OrderStatus = "IN_PROCESS" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+type OrderStatus = "IN_PROCESS" | "AWAITING_PAYMENT" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   IN_PROCESS: "bg-yellow-100 text-yellow-800",
+  AWAITING_PAYMENT: "bg-orange-100 text-orange-800",
   CONFIRMED: "bg-blue-100 text-blue-700",
   SHIPPED: "bg-purple-100 text-purple-700",
   DELIVERED: "bg-green-100 text-green-700",
@@ -22,6 +23,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   IN_PROCESS: "In Process",
+  AWAITING_PAYMENT: "Awaiting Payment",
   CONFIRMED: "Confirmed",
   SHIPPED: "Shipped",
   DELIVERED: "Delivered",
