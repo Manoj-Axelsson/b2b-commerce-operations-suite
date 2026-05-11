@@ -396,6 +396,7 @@ enum UserRole {
 
 enum OrderStatus {
   IN_PROCESS
+  AWAITING_PAYMENT
   CONFIRMED
   SHIPPED
   DELIVERED
