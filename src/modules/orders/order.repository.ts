@@ -8,18 +8,24 @@ import { OrderWithHistory } from "./order.types";
  */
 export const orderRepository = {
   /**
-   * Basic fetch by ID.
+   * Basic fetch by ID with financial fields.
    */
   async findById(id: string, tx?: Prisma.TransactionClient) {
     const client = tx || prisma;
     return client.order.findUnique({
       where: { id },
-      select: { id: true, status: true },
+      select: { 
+        id: true, 
+        status: true, 
+        subtotalPrice: true, 
+        adjustmentTotal: true, 
+        totalPrice: true 
+      },
     });
   },
 
   /**
-   * Detailed fetch with items and event trail.
+   * Detailed fetch with items, adjustments, and event trail.
    */
   async findWithHistory(id: string, tx?: Prisma.TransactionClient): Promise<OrderWithHistory | null> {
     const client = tx || prisma;
@@ -27,6 +33,7 @@ export const orderRepository = {
       where: { id },
       include: {
         items: { include: { product: true } },
+        adjustments: true,
         events: { orderBy: { createdAt: "desc" } },
         user: { select: { name: true, email: true } },
       },
@@ -42,6 +49,24 @@ export const orderRepository = {
       where: { id },
       data,
     });
+  },
+
+  /**
+   * Financial Adjustment Operations
+   */
+  async createAdjustment(data: Prisma.OrderAdjustmentCreateInput, tx?: Prisma.TransactionClient) {
+    const client = tx || prisma;
+    return client.orderAdjustment.create({ data });
+  },
+
+  async deleteAdjustment(id: string, tx?: Prisma.TransactionClient) {
+    const client = tx || prisma;
+    return client.orderAdjustment.delete({ where: { id } });
+  },
+
+  async getAdjustments(orderId: string, tx?: Prisma.TransactionClient) {
+    const client = tx || prisma;
+    return client.orderAdjustment.findMany({ where: { orderId } });
   },
 
   /**

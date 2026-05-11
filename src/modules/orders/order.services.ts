@@ -34,6 +34,20 @@ export async function updateOrderStatus({
 
     // 4. Data Preparation (Explicit logic)
     const updateData: Prisma.OrderUpdateInput = { status: validated.nextStatus };
+    
+    if (validated.nextStatus === OrderStatus.AWAITING_PAYMENT) {
+      updateData.reviewedAt = new Date();
+    }
+
+    if (validated.nextStatus === OrderStatus.CONFIRMED) {
+      // HIGH SECURITY: Verify payment received signal
+      const currentOrder = await tx.order.findUnique({ where: { id: validated.orderId } });
+      if (currentOrder?.paymentStatus !== "RECEIVED") {
+        throw new Error("Security Violation: Cannot confirm order without verified payment receipt.");
+      }
+      updateData.paymentReceivedAt = new Date();
+    }
+
     if (validated.nextStatus === OrderStatus.SHIPPED) updateData.shippedAt = new Date();
     if (validated.nextStatus === OrderStatus.DELIVERED) updateData.deliveredAt = new Date();
 

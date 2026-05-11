@@ -1,4 +1,4 @@
-import { OrderStatus, Order, OrderItem, Product, OrderEvent, User } from "@/generated/prisma/client";
+import { OrderStatus, Order, OrderItem, Product, OrderEvent, User, OrderAdjustment, AdjustmentType } from "@/generated/prisma/client";
 
 export type OrderWithItems = Order & {
   items: (OrderItem & { product: Product })[];
@@ -6,6 +6,7 @@ export type OrderWithItems = Order & {
 
 export type OrderWithHistory = OrderWithItems & {
   events: OrderEvent[];
+  adjustments: OrderAdjustment[];
   user: Pick<User, "name" | "email">;
 };
 
@@ -15,4 +16,12 @@ export interface UpdateStatusParams {
   actorId: string;
   actorRole: string;
   notes?: string;
+}
+
+export interface AddAdjustmentParams {
+  orderId: string;
+  type: AdjustmentType;
+  amount: number;
+  description?: string;
+  actorId: string;
 }
