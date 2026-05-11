@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { updateOrderStatus } from "./actions";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus } from "@/generated/prisma/client";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   IN_PROCESS: "bg-yellow-100 text-yellow-800",
