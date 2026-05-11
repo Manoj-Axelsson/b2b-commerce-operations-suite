@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { processCheckoutAction } from "@/app/actions/checkout";
+import { processCheckoutAction, saveAddressAction } from "@/app/actions/checkout";
 import { useRouter } from "next/navigation";
 import { Address } from "@/generated/prisma/client";
 
@@ -15,6 +15,8 @@ interface CheckoutClientProps {
 export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientProps) => {
   const [selectedAddressId, setSelectedAddressId] = useState<string>(addresses[0]?.id || "");
   const [isPending, setIsPending] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -41,16 +43,94 @@ export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientP
     }
   };
 
+  const handleAddAddress = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSavingAddress(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await saveAddressAction(formData);
+
+    if (result.success) {
+      router.refresh();
+      setShowAddAddressForm(false);
+      setSelectedAddressId(result.addressId!);
+      setIsSavingAddress(false);
+    } else {
+      setError(result.error || "Failed to save address");
+      setIsSavingAddress(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Left: Address Selection */}
       <div className="lg:col-span-2 space-y-8">
         <section>
-          <h2 className="text-2xl font-serif font-bold text-brand-primary mb-6 border-b border-brand-border pb-2">
-            1. Delivery Address
-          </h2>
+          <div className="flex justify-between items-center mb-6 border-b border-brand-border pb-2">
+            <h2 className="text-2xl font-serif font-bold text-brand-primary">
+              1. Delivery Address
+            </h2>
+            {!showAddAddressForm && (
+              <button 
+                onClick={() => setShowAddAddressForm(true)}
+                className="text-xs font-bold text-brand-gold-dark hover:text-brand-primary transition-colors uppercase tracking-widest"
+              >
+                + Add New
+              </button>
+            )}
+          </div>
           
-          {addresses.length > 0 ? (
+          {showAddAddressForm ? (
+            <form onSubmit={handleAddAddress} className="bg-brand-cream/20 p-8 rounded-3xl border border-brand-border animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">First Name</label>
+                  <input name="firstName" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">Last Name</label>
+                  <input name="lastName" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">Street Address</label>
+                  <input name="street" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">House Number</label>
+                  <input name="houseNumber" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">City</label>
+                  <input name="city" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">Postal Code</label>
+                  <input name="postalCode" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-wider ml-1">Country</label>
+                  <input name="country" defaultValue="Sweden" required className="w-full px-4 py-3 rounded-xl border border-brand-border focus:ring-2 focus:ring-brand-primary outline-none transition-all" />
+                </div>
+              </div>
+              <div className="flex gap-4 mt-8">
+                <button 
+                  type="submit" 
+                  disabled={isSavingAddress}
+                  className="bg-brand-primary text-white font-bold px-8 py-3 rounded-full hover:bg-brand-gold-dark transition-all shadow-md disabled:opacity-50"
+                >
+                  {isSavingAddress ? "Saving..." : "Save Address"}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddAddressForm(false)}
+                  className="text-brand-primary font-bold px-8 py-3"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : addresses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addresses.map((addr) => (
                 <div
@@ -84,7 +164,10 @@ export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientP
           ) : (
             <div className="p-8 text-center bg-brand-cream/30 border border-dashed border-brand-border rounded-3xl">
               <p className="text-muted-foreground mb-4">No addresses found in your account.</p>
-              <button className="text-brand-primary font-bold hover:underline">
+              <button 
+                onClick={() => setShowAddAddressForm(true)}
+                className="text-brand-primary font-bold hover:underline"
+              >
                 + Add New Address
               </button>
             </div>
