@@ -1,11 +1,12 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { cn, formatCurrency } from "@/lib/utils";
 import { DeleteProductButton } from "./DeleteProductButton";
 import { ToggleVisibilityButton } from "./ToggleVisibilityButton";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Products — Admin | Rajput Foods",
 };
 

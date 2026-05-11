@@ -1,4 +1,9 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Orders — Admin | Rajput Foods",
+};
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";

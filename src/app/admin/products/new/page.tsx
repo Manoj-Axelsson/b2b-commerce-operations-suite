@@ -1,8 +1,9 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductForm } from "../ProductForm";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Add Product — Admin | Rajput Foods",
 };
 

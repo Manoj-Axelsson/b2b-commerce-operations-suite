@@ -1,10 +1,15 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { StockButton } from "@/components/admin/StockButton";
 import { cn } from "@/lib/utils";
 import { PromotionAlert } from "./types/schema";
 import { Suspense } from "react";
 import { InventoryFilters } from "./components/InventoryFilters";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inventory — Admin | Rajput Foods",
+};
 
 // Logic for 3-day window notifications (Offers starting or ending)
 
