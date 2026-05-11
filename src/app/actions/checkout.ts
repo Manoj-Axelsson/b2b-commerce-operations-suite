@@ -1,8 +1,8 @@
 "use server";
 
+import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { createOrderFromCart } from "@/modules/checkout/checkout.services";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function processCheckoutAction(formData: FormData) {
