@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-type OrderStatus = "IN_PROCESS" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+import { OrderStatus } from "@prisma/client";
 
 export async function updateOrderStatus(formData: FormData) {
   const orderId = formData.get("orderId") as string;
