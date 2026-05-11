@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderStatus } from "./actions";
+import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction } from "./actions";
 import { OrderStatus } from "@/generated/prisma/client";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
@@ -47,6 +47,7 @@ export default async function AdminOrdersPage() {
           product: { select: { name: true, articleNo: true } },
         },
       },
+      adjustments: true,
     },
   });
 
@@ -153,13 +154,92 @@ export default async function AdminOrdersPage() {
                       </td>
                     </tr>
                   ))}
+
+                  {/* Adjustments List */}
+                  {order.adjustments.map((adj) => (
+                    <tr key={adj.id} className="bg-orange-50/30 italic text-orange-900 border-t border-orange-100/50">
+                      <td colSpan={2} className="p-3 text-xs">
+                        {adj.type.replace("_", " ")}: {adj.description || "No description"}
+                      </td>
+                      <td className="p-3 text-center">
+                        {order.status === "IN_PROCESS" && (
+                          <form action={async () => {
+                            "use server";
+                            await removeAdjustmentAction(order.id, adj.id);
+                          }}>
+                            <button
+                              type="submit"
+                              className="text-red-500 hover:text-red-700 transition-colors px-2 font-bold text-lg"
+                              title="Remove Adjustment"
+                            >
+                              ×
+                            </button>
+                          </form>
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-medium">
+                        {Number(adj.amount) > 0 ? "+" : ""}{formatCurrency(Number(adj.amount))}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* Add Adjustment Form (Only if IN_PROCESS) */}
+                  {order.status === "IN_PROCESS" && (
+                    <tr className="bg-gray-50/50 border-t border-dashed">
+                      <td colSpan={4} className="p-3">
+                        <form action={addAdjustmentAction} className="flex items-center gap-3 justify-end">
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <select
+                            name="type"
+                            className="text-xs border rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-orange-400 outline-none"
+                            required
+                          >
+                            <option value="DELIVERY_FEE">Delivery Fee</option>
+                            <option value="DISCOUNT">Manual Discount</option>
+                            <option value="HANDLING_FEE">Handling Fee</option>
+                            <option value="LOGISTICS">Logistics Surcharge</option>
+                          </select>
+                          <input
+                            type="number"
+                            name="amount"
+                            step="0.01"
+                            placeholder="Amount (e.g. 79)"
+                            className="text-xs border rounded-md px-2 py-1 w-32 bg-white focus:ring-2 focus:ring-orange-400 outline-none"
+                            required
+                          />
+                          <input
+                            type="text"
+                            name="description"
+                            placeholder="Reason (optional)"
+                            className="text-xs border rounded-md px-2 py-1 w-48 bg-white focus:ring-2 focus:ring-orange-400 outline-none"
+                          />
+                          <button
+                            type="submit"
+                            className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-3 py-1 rounded-md transition-all active:scale-95"
+                          >
+                            + Add
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
                 <tfoot className="bg-gray-50 border-t">
+                  {order.subtotalPrice && Number(order.adjustmentTotal) !== 0 && (
+                    <tr className="text-gray-500 text-xs">
+                      <td colSpan={3} className="p-2 text-right">
+                        Subtotal
+                      </td>
+                      <td className="p-2 text-right">
+                        {formatCurrency(Number(order.subtotalPrice))}
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td colSpan={3} className="p-3 text-right font-bold text-gray-700">
-                      Total
+                      Final Total
                     </td>
-                    <td className="p-3 text-right font-bold text-gray-900">
+                    <td className="p-3 text-right font-bold text-gray-900 text-lg">
                       {formatCurrency(Number(order.totalPrice))}
                     </td>
                   </tr>
