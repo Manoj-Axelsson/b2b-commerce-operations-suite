@@ -3,6 +3,7 @@
 import { useCartContext } from "@/components/cart/CartContext";
 import { formatCurrency, cn } from "@/lib/utils";
 import { CartItem } from "@/types/cart";
+import Link from "next/link";
 
 // --- CartItemRow ---
 
@@ -183,12 +184,13 @@ export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                             </span>
                         </div>
 
-                        <button
-                            id="cart-checkout-button"
-                            className="w-full bg-brand-primary text-white font-bold uppercase tracking-widest py-3 rounded-full hover:bg-brand-gold-dark transition-colors duration-300 shadow-md"
+                        <Link
+                            href="/shop/checkout"
+                            onClick={onClose}
+                            className="block w-full text-center bg-brand-primary text-white font-bold uppercase tracking-widest py-3 rounded-full hover:bg-brand-gold-dark transition-colors duration-300 shadow-md"
                         >
                             Proceed to Checkout
-                        </button>
+                        </Link>
 
                         <button
                             id="cart-clear-button"
