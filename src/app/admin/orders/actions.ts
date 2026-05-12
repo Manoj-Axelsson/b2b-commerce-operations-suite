@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { OrderStatus } from "@/generated/prisma/client";
+import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
 import { updateOrderStatus as updateOrderService } from "@/modules/orders/order.services";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -47,7 +47,7 @@ export async function addAdjustmentAction(formData: FormData) {
   }
 
   const orderId = formData.get("orderId") as string;
-  const type = formData.get("type") as any;
+  const type = formData.get("type") as AdjustmentType;
   const amount = parseFloat(formData.get("amount") as string);
   const description = formData.get("description") as string;
 

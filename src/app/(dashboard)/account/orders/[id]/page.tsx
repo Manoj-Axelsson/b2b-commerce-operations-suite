@@ -105,17 +105,17 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                         <div className="mt-12 p-6 bg-brand-cream rounded-2xl border border-brand-border text-center">
                             {order.status === OrderStatus.IN_PROCESS && (
                                 <p className="text-sm text-brand-primary italic">
-                                    "We are currently reviewing your order request. We will update the total with shipping costs and send you payment instructions shortly."
+                                    &quot;We are currently reviewing your order request. We will update the total with shipping costs and send you payment instructions shortly.&quot;
                                 </p>
                             )}
                             {order.status === OrderStatus.AWAITING_PAYMENT && (
                                 <p className="text-sm text-brand-primary font-semibold">
-                                    "Your order is approved! Please follow the payment instructions sent to your email to finalize the purchase."
+                                    &quot;Your order is approved! Please follow the payment instructions sent to your email to finalize the purchase.&quot;
                                 </p>
                             )}
                             {order.status === OrderStatus.CONFIRMED && (
                                 <p className="text-sm text-brand-primary">
-                                    "Payment received. We are now preparing your items for shipment."
+                                    &quot;Payment received. We are now preparing your items for shipment.&quot;
                                 </p>
                             )}
                         </div>

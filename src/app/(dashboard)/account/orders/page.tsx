@@ -54,7 +54,7 @@ export default async function UserOrdersPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                </svg>
             </div>
-            <p className="text-slate-600 mb-6">You haven't placed any orders yet.</p>
+            <p className="text-slate-600 mb-6">You haven&apos;t placed any orders yet.</p>
             <Link href="/shop" className="inline-block bg-brand-primary text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest text-sm hover:bg-brand-gold-dark transition-colors">
                 Start Shopping
             </Link>
