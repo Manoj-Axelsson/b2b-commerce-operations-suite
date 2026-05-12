@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { CartItem, CartState } from "@/types/cart";
 
 export function useCart(): CartState {
@@ -8,7 +9,15 @@ export function useCart(): CartState {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const pathname = usePathname();
+
     const syncCart = useCallback(async () => {
+        // The landing page has no cart UI and must not trigger cart logic/requests.
+        if (pathname === "/") {
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch("/api/cart");
 
@@ -20,17 +29,29 @@ export function useCart(): CartState {
                 return;
             }
 
-            if (!res.ok) throw new Error("Failed to fetch cart");
+            // Handle transient 404s gracefully ONLY in development.
+            // This prevents console clutter when Turbopack is compiling routes.
+            if (res.status === 404 && process.env.NODE_ENV === "development") {
+                setItems([]);
+                setError(null);
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(`Failed to fetch cart (Status: ${res.status})`);
+            }
+
             const data = await res.json();
             setItems(data?.items ?? []);
             setError(null);
         } catch (err) {
-            console.error("useCart sync error:", err);
+            // Only log if it's a real error (not expected guest/dev states)
+            console.error("useCart sync error:", err instanceof Error ? err.message : err);
             setError("Failed to sync cart");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [pathname]);
 
     useEffect(() => {
         // syncCart is async — setState is only called after awaiting fetch(),
