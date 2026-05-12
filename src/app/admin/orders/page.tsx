@@ -9,8 +9,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderStatus } from "./actions";
-import { OrderStatus } from "@/generated/prisma/client";
+import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction } from "./actions";
+import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
+import { ORDER_TRANSITIONS } from "@/modules/orders/order.machine";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   IN_PROCESS: "bg-yellow-100 text-yellow-800",
@@ -47,6 +48,8 @@ export default async function AdminOrdersPage() {
           product: { select: { name: true, articleNo: true } },
         },
       },
+      adjustments: true,
+      events: { orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -100,20 +103,34 @@ export default async function AdminOrdersPage() {
                       defaultValue={order.status}
                       className="text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     >
-                      {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
+                      <option value={order.status} disabled>
+                        {STATUS_LABELS[order.status]} (Current)
+                      </option>
+                      {ORDER_TRANSITIONS[order.status].map((status) => (
+                        <option key={status} value={status}>
+                          {STATUS_LABELS[status]}
                         </option>
                       ))}
                     </select>
                     <button
                       type="submit"
-                      className="text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-3 py-1 rounded transition-colors"
+                      className="text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-3 py-1 rounded transition-colors disabled:opacity-50"
+                      disabled={ORDER_TRANSITIONS[order.status].length === 0}
                     >
                       Update
                     </button>
                   </form>
                 </div>
+              </div>
+
+              {/* Payment Info Overlay */}
+              <div className={`px-4 py-1 text-[10px] uppercase tracking-widest font-bold flex justify-between ${
+                order.paymentStatus === "RECEIVED" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+              }`}>
+                <span>Payment: {order.paymentStatus}</span>
+                {order.paymentReceivedAt && (
+                  <span>Received: {new Date(order.paymentReceivedAt).toLocaleDateString()}</span>
+                )}
               </div>
 
               {/* Delivery address */}
@@ -156,15 +173,116 @@ export default async function AdminOrdersPage() {
                 </tbody>
                 <tfoot className="bg-gray-50 border-t">
                   <tr>
+                    <td colSpan={3} className="p-3 text-right text-gray-500">
+                      Subtotal
+                    </td>
+                    <td className="p-3 text-right text-gray-700">
+                      {formatCurrency(Number(order.subtotalPrice))}
+                    </td>
+                  </tr>
+                  {order.adjustments.map((adj) => (
+                    <tr key={adj.id} className="text-xs">
+                      <td colSpan={3} className="p-3 text-right italic text-gray-500">
+                        <div className="flex items-center justify-end gap-2">
+                          {adj.description || adj.type}
+                          <form action={removeAdjustmentAction}>
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <input type="hidden" name="adjustmentId" value={adj.id} />
+                            <button type="submit" className="text-red-500 hover:text-red-700">
+                              ✕
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                      <td className={`p-3 text-right ${Number(adj.amount) < 0 ? "text-green-600" : "text-red-600"}`}>
+                        {formatCurrency(Number(adj.amount))}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="border-t-2">
                     <td colSpan={3} className="p-3 text-right font-bold text-gray-700">
                       Total
                     </td>
-                    <td className="p-3 text-right font-bold text-gray-900">
+                    <td className="p-3 text-right font-bold text-gray-900 text-lg">
                       {formatCurrency(Number(order.totalPrice))}
                     </td>
                   </tr>
                 </tfoot>
               </table>
+
+              {/* Manage Financials (Only if IN_PROCESS) */}
+              {order.status === "IN_PROCESS" && (
+                <div className="p-4 bg-yellow-50 border-t">
+                  <h4 className="text-xs font-bold text-yellow-800 uppercase mb-3">Add Financial Adjustment</h4>
+                  <form action={addAdjustmentAction} className="flex flex-wrap items-center gap-4">
+                    <input type="hidden" name="orderId" value={order.id} />
+                    
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-yellow-700 font-bold">Type</label>
+                      <select name="type" className="text-xs border rounded p-1">
+                        <option value={AdjustmentType.DELIVERY_FEE}>Delivery Fee</option>
+                        <option value={AdjustmentType.DISCOUNT}>Discount</option>
+                        <option value={AdjustmentType.LOGISTICS}>Logistics</option>
+                        <option value={AdjustmentType.HANDLING_FEE}>Handling Fee</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-yellow-700 font-bold">Amount (SEK)</label>
+                      <input 
+                        type="number" 
+                        name="amount" 
+                        step="0.01" 
+                        placeholder="e.g. 79.00"
+                        className="text-xs border rounded p-1 w-24"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1 flex-1">
+                      <label className="text-[10px] text-yellow-700 font-bold">Description</label>
+                      <input 
+                        type="text" 
+                        name="description" 
+                        placeholder="e.g. Express Delivery"
+                        className="text-xs border rounded p-1 w-full"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="bg-yellow-600 text-white text-xs font-bold px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
+                    >
+                      Add Adjustment
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Order Timeline / Audit Log */}
+              <div className="p-4 bg-gray-50 border-t">
+                <details className="group">
+                  <summary className="text-xs font-bold text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-2">
+                    <span>Audit Trail / History</span>
+                    <svg className="w-3 h-3 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="mt-4 space-y-3">
+                    {order.events.map((event) => (
+                      <div key={event.id} className="text-[10px] border-l-2 border-gray-200 pl-3 py-1">
+                        <div className="flex justify-between font-mono text-gray-400">
+                          <span>{new Date(event.createdAt).toLocaleString("sv-SE")}</span>
+                          <span>{event.actorRole}</span>
+                        </div>
+                        <p className="text-gray-700 mt-0.5">
+                          {event.notes}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              </div>
             </div>
           ))}
         </div>
