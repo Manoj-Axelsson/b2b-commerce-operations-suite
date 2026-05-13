@@ -28,7 +28,7 @@ export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientP
   const [isPending, setIsPending] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
   const router = useRouter();
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -50,8 +50,21 @@ export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientP
     if (result.success && "orderId" in result) {
       router.push(`/shop/checkout/success?orderId=${result.orderId}`);
     } else {
-      // TypeScript now correctly identifies 'error' exists here due to Discriminated Union
-      setError(result.error || "An unknown error occurred");
+      if (result.status === 409) {
+        setError(
+          <div className="flex flex-col gap-3">
+            <p>{result.error}</p>
+            <button 
+              onClick={() => router.push("/account/orders")}
+              className="text-xs font-bold underline hover:text-black transition-colors"
+            >
+              Go to Order History →
+            </button>
+          </div>
+        );
+      } else {
+        setError(result.error || "An unknown error occurred");
+      }
       setIsPending(false);
     }
   };
