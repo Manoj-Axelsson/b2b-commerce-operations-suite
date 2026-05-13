@@ -233,8 +233,10 @@ model Order {
   deliveredAt       DateTime?
 
   // ------------------------------------------------------
-  // SYSTEM TIMESTAMPS
+  // SYSTEM TIMESTAMPS & SECURITY
   // ------------------------------------------------------
+  
+  idempotencyKey String? @unique
 
   createdAt DateTime @default(now())
 

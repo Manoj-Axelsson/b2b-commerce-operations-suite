@@ -4,6 +4,7 @@ import { orderRepository } from "./order.repository";
 import { updateStatusSchema } from "./order.validators";
 import { UpdateStatusParams, OrderWithHistory } from "./order.types";
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
+import { BusinessError } from "@/lib/error";
 
 /**
  * Service to orchestrate order status updates.
@@ -22,13 +23,20 @@ export async function updateOrderStatus({
   return await prisma.$transaction(async (tx) => {
     // 2. Data Fetch (Current State)
     const order = await orderRepository.findById(validated.orderId, tx);
-    if (!order) throw new Error(`Order ${validated.orderId} not found`);
+    if (!order) throw new BusinessError(`Order ${validated.orderId} not found`, 404);
+
+    // 2.1 Idempotency: If already in this status, return success without audit log duplication
+    if (order.status === validated.nextStatus) {
+      console.log(`[IDEMPOTENCY]: Order ${validated.orderId} is already ${validated.nextStatus}. Skipping.`);
+      return order;
+    }
 
     // 3. Workflow Rules Check (Machine)
     const allowedTransitions = ORDER_TRANSITIONS[order.status];
     if (!allowedTransitions.includes(validated.nextStatus)) {
-      throw new Error(
-        `Illegal transition: Cannot move from ${order.status} to ${validated.nextStatus}`
+      throw new BusinessError(
+        `Illegal transition: Cannot move from ${order.status} to ${validated.nextStatus}`,
+        422
       );
     }
 
@@ -43,7 +51,7 @@ export async function updateOrderStatus({
       // HIGH SECURITY: Verify payment received signal
       const currentOrder = await tx.order.findUnique({ where: { id: validated.orderId } });
       if (currentOrder?.paymentStatus !== "RECEIVED") {
-        throw new Error("Security Violation: Cannot confirm order without verified payment receipt.");
+        throw new BusinessError("Security Violation: Cannot confirm order without verified payment receipt.", 403);
       }
       updateData.paymentReceivedAt = new Date();
     }

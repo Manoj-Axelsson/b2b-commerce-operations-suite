@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@/generated/prisma/client";
 import { createOrderFromCartSchema } from "./checkout.validators";
 import { CheckoutLineSnapshot, CheckoutOrder, CreateOrderFromCartInput } from "./checkout.types";
+import { BusinessError } from "@/lib/error";
 
 /**
  * Calculates the price based on active discounts.
@@ -32,8 +33,9 @@ function normalizeStreet(street: string, houseNumber: string | null): string {
  * 
  * Flow:
  * 1. Validate inputs (Zod)
- * 2. Fetch cart/address and validate stock (Read)
- * 3. Atomic Transaction:
+ * 2. Deterministic Idempotency Check (Layer 1)
+ * 3. Fetch cart/address and validate stock (Read)
+ * 4. Atomic Transaction:
  *    - Create Order & OrderItems
  *    - Decrement Inventory Stock
  *    - Clear Cart
@@ -43,8 +45,20 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
   const validated = createOrderFromCartSchema.parse(input);
   const now = new Date();
 
+  // 1. Layer 1: True Idempotency (Deterministic Check)
+  if (validated.idempotencyKey) {
+    const existingOrder = await prisma.order.findUnique({
+      where: { idempotencyKey: validated.idempotencyKey },
+      include: { items: true }
+    });
+    if (existingOrder) {
+      console.log(`[IDEMPOTENCY]: Replaying existing order ${existingOrder.id} for key ${validated.idempotencyKey}`);
+      return existingOrder;
+    }
+  }
+
   return prisma.$transaction(async (tx) => {
-    // 1. Fetch Cart and Address
+    // 2. Fetch Cart and Address
     const [cart, address] = await Promise.all([
       tx.cart.findUnique({
         where: { userId: validated.userId },
@@ -63,14 +77,14 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
       }),
     ]);
 
-    if (!address) throw new Error("Delivery address not found or unauthorized");
-    if (!cart || cart.items.length === 0) throw new Error("Cart is empty");
+    if (!address) throw new BusinessError("Delivery address not found or unauthorized", 400);
+    if (!cart || cart.items.length === 0) throw new BusinessError("Cart is empty", 400);
 
     // 2. Validate Inventory and Prepare Snapshots
     const lineSnapshots: CheckoutLineSnapshot[] = cart.items.map((item) => {
       const p = item.product;
-      if (!p.isActive || p.isDeleted) throw new Error(`Product ${p.name} is no longer available`);
-      if (item.quantity > p.quantity) throw new Error(`Insufficient stock for ${p.name}`);
+      if (!p.isActive || p.isDeleted) throw new BusinessError(`Product ${p.name} is no longer available`, 422);
+      if (item.quantity > p.quantity) throw new BusinessError(`Insufficient stock for ${p.name}`, 422);
 
       const unitPrice = getEffectivePrice(p, now);
       return {
@@ -84,19 +98,19 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
     });
 
     const subtotalPrice = lineSnapshots.reduce((sum, item) => sum + item.lineTotal, 0);
-    const totalPrice = subtotalPrice; // Future: add shipping/tax logic here
+    const totalPrice = subtotalPrice;
 
     // 3. Create the Order
     const order = await tx.order.create({
       data: {
         userId: validated.userId,
         addressId: validated.addressId,
+        idempotencyKey: validated.idempotencyKey,
         status: OrderStatus.IN_PROCESS,
         paymentStatus: PaymentStatus.PENDING,
         subtotalPrice,
         adjustmentTotal: 0,
         totalPrice,
-        // Delivery Snapshots (Mandatory in schema)
         deliveryStreet: normalizeStreet(address.street, address.houseNumber),
         deliveryCity: address.city,
         deliveryPostalCode: address.postalCode,
@@ -107,7 +121,7 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
             productName: snap.productName,
             sku: snap.sku,
             quantity: snap.quantity,
-            price: snap.unitPrice, // Schema uses 'price'
+            price: snap.unitPrice,
             lineTotal: snap.lineTotal,
           })),
         },

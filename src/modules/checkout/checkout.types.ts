@@ -3,6 +3,7 @@ import { Order } from "@/generated/prisma/client";
 export interface CreateOrderFromCartInput {
   userId: string;
   addressId: string;
+  idempotencyKey?: string;
 }
 
 export interface CheckoutLineSnapshot {
