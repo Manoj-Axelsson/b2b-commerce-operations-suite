@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { AdminProductUpdateSchema } from "@/app/admin/inventory/types/schema";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
  * verifyAdmin
@@ -229,25 +230,29 @@ export async function deleteProduct(id: string) {
       where: { productId: id },
     });
 
-    if (orderCount > 0) {
-      await prisma.product.update({
-        where: { id },
-        data: {
-          isActive: false,
-          isDeleted: true,
-        },
-      });
-    } else {
-      await prisma.wishlist.deleteMany({ where: { productId: id } });
-      await prisma.cartItem.deleteMany({ where: { productId: id } });
-      await prisma.stockMovement.deleteMany({ where: { productId: id } });
-      await prisma.product.delete({ where: { id } });
-    }
+    await runManagedTransaction(undefined, async (tx) => {
+      if (orderCount > 0) {
+        // Soft-delete if referenced by orders
+        await tx.product.update({
+          where: { id },
+          data: {
+            isActive: false,
+            isDeleted: true,
+          },
+        });
+      } else {
+        // Hard-delete: Clean up all non-order dependencies atomically
+        await tx.wishlist.deleteMany({ where: { productId: id } });
+        await tx.cartItem.deleteMany({ where: { productId: id } });
+        await tx.stockMovement.deleteMany({ where: { productId: id } });
+        await tx.product.delete({ where: { id } });
+      }
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/shop");
   } catch (error) {
     console.error("DELETE PRODUCT ERROR:", error);
-    throw new Error("Failed to delete product.");
+    throw new Error(error instanceof Error ? error.message : "Failed to delete product.");
   }
-
-  revalidatePath("/admin/products");
-  revalidatePath("/shop");
 }

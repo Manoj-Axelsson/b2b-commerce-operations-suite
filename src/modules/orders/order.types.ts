@@ -17,6 +17,7 @@ export interface UpdateStatusParams {
   actorRole: string;
   notes?: string;
   signal?: AbortSignal;
+  tx?: Prisma.TransactionClient;
 }
 
 export interface AddAdjustmentParams {
@@ -26,4 +27,5 @@ export interface AddAdjustmentParams {
   description?: string;
   actorId: string;
   signal?: AbortSignal;
+  tx?: Prisma.TransactionClient;
 }
