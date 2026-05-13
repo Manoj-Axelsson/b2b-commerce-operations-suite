@@ -41,7 +41,10 @@ export function formatSafeError(err: unknown) {
 export function formatSafeResponse(err: unknown) {
   const formatted = formatSafeError(err);
   return NextResponse.json(
-    { error: formatted.error, details: (formatted as any).details },
+    { 
+      error: formatted.error, 
+      details: "details" in formatted ? formatted.details : undefined 
+    },
     { status: formatted.status }
   );
 }
