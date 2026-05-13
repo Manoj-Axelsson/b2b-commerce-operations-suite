@@ -7,7 +7,10 @@ import { revalidatePath } from "next/cache";
 
 import { formatSafeError, BusinessError } from "@/lib/error";
 
-export async function processCheckoutAction(formData: FormData) {
+export async function processCheckoutAction(formData: FormData): Promise<
+  | { success: true; orderId: string }
+  | { success: false; error: string; status?: number; details?: any }
+> {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized");
 
@@ -32,7 +35,10 @@ export async function processCheckoutAction(formData: FormData) {
   }
 }
 
-export async function saveAddressAction(formData: FormData) {
+export async function saveAddressAction(formData: FormData): Promise<
+  | { success: true; addressId: string }
+  | { success: false; error: string; status?: number; details?: any }
+> {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized");
 

@@ -96,13 +96,7 @@ export default async function AdminOrdersPage() {
                   </span>
 
                   {/* Status update form */}
-                  <form 
-                    action={async (fd) => {
-                      "use server";
-                      await updateOrderStatus(fd);
-                    }} 
-                    className="flex items-center gap-2"
-                  >
+                  <form action={updateOrderStatus} className="flex items-center gap-2">
                     <input type="hidden" name="orderId" value={order.id} />
                     <select
                       name="status"
@@ -191,10 +185,7 @@ export default async function AdminOrdersPage() {
                       <td colSpan={3} className="p-3 text-right italic text-gray-500">
                         <div className="flex items-center justify-end gap-2">
                           {adj.description || adj.type}
-                          <form action={async (fd) => {
-                            "use server";
-                            await removeAdjustmentAction(fd);
-                          }}>
+                          <form action={removeAdjustmentAction}>
                             <input type="hidden" name="orderId" value={order.id} />
                             <input type="hidden" name="adjustmentId" value={adj.id} />
                             <button type="submit" className="text-red-500 hover:text-red-700">
@@ -223,13 +214,7 @@ export default async function AdminOrdersPage() {
               {order.status === "IN_PROCESS" && (
                 <div className="p-4 bg-yellow-50 border-t">
                   <h4 className="text-xs font-bold text-yellow-800 uppercase mb-3">Add Financial Adjustment</h4>
-                  <form 
-                    action={async (fd) => {
-                      "use server";
-                      await addAdjustmentAction(fd);
-                    }} 
-                    className="flex flex-wrap items-center gap-4"
-                  >
+                  <form action={addAdjustmentAction} className="flex flex-wrap items-center gap-4">
                     <input type="hidden" name="orderId" value={order.id} />
                     
                     <div className="flex flex-col gap-1">

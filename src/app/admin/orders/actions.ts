@@ -33,9 +33,8 @@ export async function updateOrderStatus(formData: FormData) {
     });
 
     revalidatePath("/admin/orders");
-    return { success: true };
   } catch (error) {
-    return formatSafeError(error);
+    formatSafeError(error);
   }
 }
 
@@ -67,9 +66,8 @@ export async function addAdjustmentAction(formData: FormData) {
       })
     );
     revalidatePath("/admin/orders");
-    return { success: true };
   } catch (error) {
-    return formatSafeError(error);
+    formatSafeError(error);
   }
 }
 
@@ -87,8 +85,7 @@ export async function removeAdjustmentAction(formData: FormData) {
       m.removeOrderAdjustment(orderId, adjustmentId, session.user.id)
     );
     revalidatePath("/admin/orders");
-    return { success: true };
   } catch (error) {
-    return formatSafeError(error);
+    formatSafeError(error);
   }
 }
