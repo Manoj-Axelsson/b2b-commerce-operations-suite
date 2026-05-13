@@ -28,7 +28,7 @@ export function formatSafeError(err: unknown) {
   }
 
   if (err instanceof ZodError) {
-    return { success: false, error: "Invalid request data", details: err.errors, status: 400 };
+    return { success: false, error: "Invalid request data", details: err.issues, status: 400 };
   }
 
   // Mask all other internal system errors
