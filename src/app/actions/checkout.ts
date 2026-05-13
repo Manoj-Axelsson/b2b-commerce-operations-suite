@@ -9,7 +9,7 @@ import { formatSafeError, BusinessError } from "@/lib/error";
 
 export async function processCheckoutAction(formData: FormData): Promise<
   | { success: true; orderId: string }
-  | { success: false; error: string; status?: number; details?: any }
+  | { success: false; error: string; status?: number; details?: unknown }
 > {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized");
@@ -37,7 +37,7 @@ export async function processCheckoutAction(formData: FormData): Promise<
 
 export async function saveAddressAction(formData: FormData): Promise<
   | { success: true; addressId: string }
-  | { success: false; error: string; status?: number; details?: any }
+  | { success: false; error: string; status?: number; details?: unknown }
 > {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized");

@@ -20,7 +20,7 @@ export class BusinessError extends Error {
  * Masking internal system details while exposing safe business errors.
  */
 export function formatSafeError(err: unknown): 
-  { success: false; error: string; status: number; details?: any } 
+  { success: false; error: string; status: number; details?: unknown } 
 {
   // Log the full error on the server for debugging
   console.error("[SERVER_ERROR]:", err);
