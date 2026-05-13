@@ -42,8 +42,12 @@ function normalizeStreet(street: string, houseNumber: string | null): string {
  *    - Create initial Audit Log
  */
 export async function createOrderFromCart(input: CreateOrderFromCartInput): Promise<CheckoutOrder> {
+  const { signal } = input;
   const validated = createOrderFromCartSchema.parse(input);
   const now = new Date();
+
+  // 0. Resource Protection: Early Abort Check
+  if (signal?.aborted) throw new BusinessError("Checkout cancelled by user", 499);
 
   // 1. Layer 1: True Idempotency (Deterministic Check)
   if (validated.idempotencyKey) {
@@ -57,30 +61,47 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
     }
   }
 
+  if (signal?.aborted) throw new BusinessError("Checkout cancelled by user", 499);
+
   return prisma.$transaction(async (tx) => {
-    // 2. Fetch Cart and Address
-    const [cart, address] = await Promise.all([
-      tx.cart.findUnique({
-        where: { userId: validated.userId },
-        include: {
-          items: {
-            include: { product: true },
-            orderBy: { createdAt: "asc" },
-          },
+    // 2. Fetch Cart first to know which products to lock
+    const cart = await tx.cart.findUnique({
+      where: { userId: validated.userId },
+      include: {
+        items: {
+          include: { product: true },
+          orderBy: { createdAt: "asc" },
         },
-      }),
-      tx.address.findFirst({
-        where: {
-          id: validated.addressId,
-          userId: validated.userId,
-        },
-      }),
-    ]);
+      },
+    });
+
+    if (!cart || cart.items.length === 0) throw new BusinessError("Cart is empty", 400);
+    if (signal?.aborted) throw new BusinessError("Checkout cancelled during processing", 499);
+
+    // 3. DEADLOCK PREVENTION: Sorted Row-Level Locking
+    // We sort product IDs alphabetically to ensure consistent lock acquisition order
+    // across ALL concurrent transactions in the system.
+    const productIds = Array.from(new Set(cart.items.map(item => item.productId))).sort();
+    
+    // Explicitly lock rows in the database
+    // This prevents "Request A locks P1, Request B locks P2 -> Cross-Deadlock"
+    await tx.$executeRawUnsafe(
+      `SELECT id FROM "product" WHERE id IN (${productIds.map((_, i) => `$${i + 1}`).join(",")}) ORDER BY id ASC FOR UPDATE`,
+      ...productIds
+    );
+
+    // 4. Fetch Address (can be done after locking or in parallel)
+    const address = await tx.address.findFirst({
+      where: {
+        id: validated.addressId,
+        userId: validated.userId,
+      },
+    });
 
     if (!address) throw new BusinessError("Delivery address not found or unauthorized", 400);
-    if (!cart || cart.items.length === 0) throw new BusinessError("Cart is empty", 400);
 
-    // 2. Validate Inventory and Prepare Snapshots
+    // 5. Validate Inventory and Prepare Snapshots
+    // Since we have the FOR UPDATE lock, 'p.quantity' is guaranteed stable here
     const lineSnapshots: CheckoutLineSnapshot[] = cart.items.map((item) => {
       const p = item.product;
       if (!p.isActive || p.isDeleted) throw new BusinessError(`Product ${p.name} is no longer available`, 422);
@@ -100,7 +121,7 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
     const subtotalPrice = lineSnapshots.reduce((sum, item) => sum + item.lineTotal, 0);
     const totalPrice = subtotalPrice;
 
-    // 3. Create the Order
+    // 6. Create the Order
     const order = await tx.order.create({
       data: {
         userId: validated.userId,
@@ -128,7 +149,8 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
       },
     });
 
-    // 4. Update Inventory (Decrement Stock)
+    // 7. Update Inventory (Decrement Stock)
+    // We already hold the locks, so this is now safe and conflict-free
     for (const item of cart.items) {
       await tx.product.update({
         where: { id: item.productId },
@@ -138,12 +160,12 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
       });
     }
 
-    // 5. Clear the Cart
+    // 8. Clear the Cart
     await tx.cartItem.deleteMany({
       where: { cartId: cart.id },
     });
 
-    // 6. Create Initial Audit Log (OrderEvent)
+    // 9. Create Initial Audit Log (OrderEvent)
     await tx.orderEvent.create({
       data: {
         orderId: order.id,

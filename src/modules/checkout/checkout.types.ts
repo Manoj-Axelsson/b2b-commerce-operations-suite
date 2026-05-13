@@ -4,6 +4,7 @@ export interface CreateOrderFromCartInput {
   userId: string;
   addressId: string;
   idempotencyKey?: string;
+  signal?: AbortSignal;
 }
 
 export interface CheckoutLineSnapshot {
