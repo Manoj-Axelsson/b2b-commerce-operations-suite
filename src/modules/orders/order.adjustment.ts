@@ -1,8 +1,8 @@
-import prisma from "@/lib/prisma";
 import { orderRepository } from "./order.repository";
 import { addAdjustmentSchema } from "./order.validators";
 import { AddAdjustmentParams } from "./order.types";
 import { OrderStatus, UserRole, Prisma } from "@/generated/prisma/client";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
  * Service to handle financial adjustments (Discounts, Fees, etc.)
@@ -13,11 +13,12 @@ export async function addOrderAdjustment({
   amount,
   description,
   actorId,
+  signal,
 }: AddAdjustmentParams) {
   // 1. Validate Input
   const validated = addAdjustmentSchema.parse({ orderId, type, amount, description });
 
-  return await prisma.$transaction(async (tx) => {
+  return runManagedTransaction(signal, async (tx) => {
     // 2. Fetch Order & Verify State
     const order = await orderRepository.findById(validated.orderId, tx);
     if (!order) throw new Error(`Order ${validated.orderId} not found`);
@@ -71,8 +72,8 @@ export async function addOrderAdjustment({
 /**
  * Service to remove an adjustment and revert the totals.
  */
-export async function removeOrderAdjustment(orderId: string, adjustmentId: string, actorId: string) {
-  return await prisma.$transaction(async (tx) => {
+export async function removeOrderAdjustment(orderId: string, adjustmentId: string, actorId: string, signal?: AbortSignal) {
+  return runManagedTransaction(signal, async (tx) => {
     const order = await orderRepository.findById(orderId, tx);
     if (!order) throw new Error(`Order ${orderId} not found`);
     

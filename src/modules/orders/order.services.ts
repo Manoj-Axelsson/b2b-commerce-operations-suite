@@ -1,10 +1,10 @@
-import prisma from "@/lib/prisma";
 import { ORDER_TRANSITIONS } from "./order.machine";
 import { orderRepository } from "./order.repository";
 import { updateStatusSchema } from "./order.validators";
 import { UpdateStatusParams, OrderWithHistory } from "./order.types";
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { BusinessError } from "@/lib/error";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
  * Service to orchestrate order status updates.
@@ -16,11 +16,12 @@ export async function updateOrderStatus({
   actorId,
   actorRole,
   notes,
+  signal,
 }: UpdateStatusParams) {
   // 1. Validation Wrap (Input Safety)
   const validated = updateStatusSchema.parse({ orderId, nextStatus, notes });
 
-  return await prisma.$transaction(async (tx) => {
+  return runManagedTransaction(signal, async (tx) => {
     // 2. Data Fetch (Current State)
     const order = await orderRepository.findById(validated.orderId, tx);
     if (!order) throw new BusinessError(`Order ${validated.orderId} not found`, 404);
