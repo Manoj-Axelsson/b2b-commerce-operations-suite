@@ -24,6 +24,7 @@ interface CheckoutClientProps {
 
 export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientProps) => {
   const [selectedAddressId, setSelectedAddressId] = useState<string>(addresses[0]?.id || "");
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [isPending, setIsPending] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
@@ -42,12 +43,14 @@ export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientP
 
     const formData = new FormData();
     formData.append("addressId", selectedAddressId);
+    formData.append("idempotencyKey", idempotencyKey);
 
     const result = await processCheckoutAction(formData);
 
-    if (result.success) {
+    if (result.success && "orderId" in result) {
       router.push(`/shop/checkout/success?orderId=${result.orderId}`);
     } else {
+      // TypeScript now correctly identifies 'error' exists here due to Discriminated Union
       setError(result.error || "An unknown error occurred");
       setIsPending(false);
     }
@@ -61,10 +64,10 @@ export const CheckoutClient = ({ items, totalPrice, addresses }: CheckoutClientP
     const formData = new FormData(e.currentTarget);
     const result = await saveAddressAction(formData);
 
-    if (result.success) {
+    if (result.success && "addressId" in result) {
       router.refresh();
       setShowAddAddressForm(false);
-      setSelectedAddressId(result.addressId!);
+      setSelectedAddressId(result.addressId);
       setIsSavingAddress(false);
     } else {
       setError(result.error || "Failed to save address");
