@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { formatSafeResponse } from "@/lib/error";
 
 // GET /api/cart — returns the current user's cart, creating one if it doesn't exist
 export async function GET(request: NextRequest) {
@@ -67,8 +68,7 @@ export async function GET(request: NextRequest) {
         return Response.json({ items });
 
     } catch (error) {
-        console.error("GET /api/cart error:", error);
-        return new Response("Internal Server Error", { status: 500 });
+        return formatSafeResponse(error);
     }
 }
 
@@ -102,7 +102,6 @@ export async function DELETE(request: NextRequest) {
         return new Response(null, { status: 204 });
 
     } catch (error) {
-        console.error("DELETE /api/cart error:", error);
-        return new Response("Internal Server Error", { status: 500 });
+        return formatSafeResponse(error);
     }
 }

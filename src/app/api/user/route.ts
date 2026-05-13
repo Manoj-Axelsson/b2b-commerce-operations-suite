@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/utils";
+import { formatSafeResponse } from "@/lib/error";
 
 export async function GET(req: Request) {
   try {
@@ -40,10 +41,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ ...dbUser, role });
   } catch (err) {
-    console.error("USER_API_ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch user" },
-      { status: 500 },
-    );
+    return formatSafeResponse(err);
   }
 }

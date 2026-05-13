@@ -5,27 +5,30 @@ import { getSession } from "@/lib/session";
 import { createOrderFromCart } from "@/modules/checkout/checkout.services";
 import { revalidatePath } from "next/cache";
 
+import { formatSafeError, BusinessError } from "@/lib/error";
+
 export async function processCheckoutAction(formData: FormData) {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized");
 
   const addressId = formData.get("addressId") as string;
-  if (!addressId) throw new Error("Delivery address is required");
+  const idempotencyKey = formData.get("idempotencyKey") as string;
+
+  if (!addressId) throw new BusinessError("Delivery address is required", 400);
 
   try {
     const order = await createOrderFromCart({
       userId: session.user.id,
       addressId: addressId,
+      idempotencyKey: idempotencyKey,
     });
 
     revalidatePath("/admin/orders");
     revalidatePath("/shop");
-    
-    // Redirect to a success page or back to account orders
+
     return { success: true, orderId: order.id };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "An unexpected error occurred";
-    return { success: false, error: message };
+    return formatSafeError(error);
   }
 }
 
@@ -34,6 +37,10 @@ export async function saveAddressAction(formData: FormData) {
   if (!session?.user) throw new Error("Unauthorized");
 
   try {
+    if (!formData.get("street") || !formData.get("city")) {
+      throw new BusinessError("Street and City are required", 400);
+    }
+
     const address = await prisma.address.create({
       data: {
         userId: session.user.id,
@@ -53,7 +60,6 @@ export async function saveAddressAction(formData: FormData) {
     revalidatePath("/shop/checkout");
     return { success: true, addressId: address.id };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to save address";
-    return { success: false, error: message };
+    return formatSafeError(error);
   }
 }

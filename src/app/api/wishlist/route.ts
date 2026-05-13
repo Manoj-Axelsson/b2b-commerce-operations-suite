@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { formatSafeResponse } from "@/lib/error";
 
 const WishlistActionSchema = z.object({
   productId: z.string(),
@@ -35,8 +36,7 @@ export async function GET(_request: Request) {
 
     return NextResponse.json({ productIds });
   } catch (error) {
-    console.error("GET Wishlist Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return formatSafeResponse(error);
   }
 }
 
@@ -100,7 +100,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("POST Wishlist Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return formatSafeResponse(error);
   }
 }

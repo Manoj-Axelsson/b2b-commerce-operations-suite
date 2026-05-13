@@ -6,6 +6,7 @@ import { updateOrderStatus as updateOrderService } from "@/modules/orders/order.
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ADMIN_EMAIL } from "@/lib/utils";
+import { formatSafeError, BusinessError } from "@/lib/error";
 
 export async function updateOrderStatus(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -19,7 +20,7 @@ export async function updateOrderStatus(formData: FormData) {
   const status = formData.get("status") as OrderStatus;
 
   if (!orderId || !status) {
-    throw new Error("Missing orderId or status");
+    throw new BusinessError("Missing orderId or status", 400);
   }
 
   try {
@@ -32,9 +33,9 @@ export async function updateOrderStatus(formData: FormData) {
     });
 
     revalidatePath("/admin/orders");
+    return { success: true };
   } catch (error) {
-    console.error("Failed to update order status:", error);
-    throw error; // Re-throw to be caught by error boundary
+    return formatSafeError(error);
   }
 }
 
@@ -52,7 +53,7 @@ export async function addAdjustmentAction(formData: FormData) {
   const description = formData.get("description") as string;
 
   if (!orderId || !type || isNaN(amount)) {
-    throw new Error("Invalid adjustment data");
+    throw new BusinessError("Invalid adjustment data", 400);
   }
 
   try {
@@ -66,9 +67,9 @@ export async function addAdjustmentAction(formData: FormData) {
       })
     );
     revalidatePath("/admin/orders");
+    return { success: true };
   } catch (error) {
-    console.error("Adjustment failed:", error);
-    throw error;
+    return formatSafeError(error);
   }
 }
 
@@ -86,8 +87,8 @@ export async function removeAdjustmentAction(formData: FormData) {
       m.removeOrderAdjustment(orderId, adjustmentId, session.user.id)
     );
     revalidatePath("/admin/orders");
+    return { success: true };
   } catch (error) {
-    console.error("Removal failed:", error);
-    throw error;
+    return formatSafeError(error);
   }
 }
