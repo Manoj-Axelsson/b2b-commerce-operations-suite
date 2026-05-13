@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatSafeError, BusinessError } from "@/lib/error";
 
-export async function updateOrderStatus(formData: FormData) {
+export async function updateOrderStatus(formData: FormData): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() });
   const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
 
@@ -38,7 +38,7 @@ export async function updateOrderStatus(formData: FormData) {
   }
 }
 
-export async function addAdjustmentAction(formData: FormData) {
+export async function addAdjustmentAction(formData: FormData): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() });
   const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
 
@@ -71,7 +71,7 @@ export async function addAdjustmentAction(formData: FormData) {
   }
 }
 
-export async function removeAdjustmentAction(formData: FormData) {
+export async function removeAdjustmentAction(formData: FormData): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() });
   const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
 
