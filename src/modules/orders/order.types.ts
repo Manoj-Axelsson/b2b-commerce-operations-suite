@@ -16,6 +16,7 @@ export interface UpdateStatusParams {
   actorId: string;
   actorRole: string;
   notes?: string;
+  signal?: AbortSignal;
 }
 
 export interface AddAdjustmentParams {
@@ -24,4 +25,5 @@ export interface AddAdjustmentParams {
   amount: number;
   description?: string;
   actorId: string;
+  signal?: AbortSignal;
 }

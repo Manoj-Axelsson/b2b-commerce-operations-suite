@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
  * verifyAdmin
@@ -95,22 +96,24 @@ export async function deleteCustomer(id: string) {
     });
     const orderIds = userOrders.map((o) => o.id);
 
-    await prisma.$transaction([
-      // Clean up orphaned relations
-      prisma.stockMovement.updateMany({
+    // Delete in strict dependency order inside a managed transaction.
+    // signal is undefined here — Next.js 16 Server Actions do not expose request.signal.
+    // The DB-level timeout guards in runManagedTransaction still apply unconditionally.
+    await runManagedTransaction(undefined, async (tx) => {
+      await tx.stockMovement.updateMany({
         where: { performedByUserId: id },
         data: { performedByUserId: null },
-      }),
-      prisma.cartItem.deleteMany({ where: { cart: { userId: id } } }),
-      prisma.cart.deleteMany({ where: { userId: id } }),
-      prisma.wishlist.deleteMany({ where: { userId: id } }),
-      prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } }),
-      prisma.order.deleteMany({ where: { userId: id } }),
-      prisma.address.deleteMany({ where: { userId: id } }),
-      prisma.session.deleteMany({ where: { userId: id } }),
-      prisma.account.deleteMany({ where: { userId: id } }),
-      prisma.user.delete({ where: { id } }),
-    ]);
+      });
+      await tx.cartItem.deleteMany({ where: { cart: { userId: id } } });
+      await tx.cart.deleteMany({ where: { userId: id } });
+      await tx.wishlist.deleteMany({ where: { userId: id } });
+      await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+      await tx.order.deleteMany({ where: { userId: id } });
+      await tx.address.deleteMany({ where: { userId: id } });
+      await tx.session.deleteMany({ where: { userId: id } });
+      await tx.account.deleteMany({ where: { userId: id } });
+      await tx.user.delete({ where: { id } });
+    });
 
     revalidatePath("/admin/customers");
     return { success: true };

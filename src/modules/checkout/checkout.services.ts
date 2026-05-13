@@ -3,6 +3,7 @@ import { OrderStatus, PaymentStatus } from "@/generated/prisma/client";
 import { createOrderFromCartSchema } from "./checkout.validators";
 import { CheckoutLineSnapshot, CheckoutOrder, CreateOrderFromCartInput } from "./checkout.types";
 import { BusinessError } from "@/lib/error";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
  * Calculates the price based on active discounts.
@@ -63,7 +64,7 @@ export async function createOrderFromCart(input: CreateOrderFromCartInput): Prom
 
   if (signal?.aborted) throw new BusinessError("Checkout cancelled by user", 499);
 
-  return prisma.$transaction(async (tx) => {
+  return runManagedTransaction(signal, async (tx) => {
     // 2. Fetch Cart first to know which products to lock
     const cart = await tx.cart.findUnique({
       where: { userId: validated.userId },
