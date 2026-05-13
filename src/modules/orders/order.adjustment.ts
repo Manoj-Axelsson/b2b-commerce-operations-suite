@@ -14,13 +14,14 @@ export async function addOrderAdjustment({
   description,
   actorId,
   signal,
+  tx,
 }: AddAdjustmentParams) {
   // 1. Validate Input
   const validated = addAdjustmentSchema.parse({ orderId, type, amount, description });
 
-  return runManagedTransaction(signal, async (tx) => {
+  const execute = async (currentTx: Prisma.TransactionClient) => {
     // 2. Fetch Order & Verify State
-    const order = await orderRepository.findById(validated.orderId, tx);
+    const order = await orderRepository.findById(validated.orderId, currentTx);
     if (!order) throw new Error(`Order ${validated.orderId} not found`);
     
     // STRICT GUARD: Adjustments only allowed during IN_PROCESS
@@ -35,10 +36,10 @@ export async function addOrderAdjustment({
       amount: validated.amount,
       description: validated.description,
       createdBy: actorId,
-    }, tx);
+    }, currentTx);
 
     // 4. Recalculate Totals
-    const adjustments = await orderRepository.getAdjustments(validated.orderId, tx);
+    const adjustments = await orderRepository.getAdjustments(validated.orderId, currentTx);
     
     // Sum all adjustments
     const adjustmentTotal = adjustments.reduce(
@@ -53,28 +54,31 @@ export async function addOrderAdjustment({
     const updatedOrder = await orderRepository.update(validated.orderId, {
       adjustmentTotal,
       totalPrice,
-    }, tx);
+    }, currentTx);
 
     // 6. Audit Logging
     await orderRepository.createEvent({
       orderId: validated.orderId,
       previousStatus: order.status,
-      nextStatus: order.status, // Status hasn't changed, but state updated
+      nextStatus: order.status,
       actorId,
       actorRole: UserRole.ADMIN,
       notes: `Financial Adjustment added: ${validated.type} (${validated.amount} SEK). Description: ${validated.description || "N/A"}`,
-    }, tx);
+    }, currentTx);
 
     return updatedOrder;
-  });
+  };
+
+  if (tx) return execute(tx);
+  return runManagedTransaction(signal, execute);
 }
 
 /**
  * Service to remove an adjustment and revert the totals.
  */
-export async function removeOrderAdjustment(orderId: string, adjustmentId: string, actorId: string, signal?: AbortSignal) {
-  return runManagedTransaction(signal, async (tx) => {
-    const order = await orderRepository.findById(orderId, tx);
+export async function removeOrderAdjustment(orderId: string, adjustmentId: string, actorId: string, signal?: AbortSignal, tx?: Prisma.TransactionClient) {
+  const execute = async (currentTx: Prisma.TransactionClient) => {
+    const order = await orderRepository.findById(orderId, currentTx);
     if (!order) throw new Error(`Order ${orderId} not found`);
     
     if (order.status !== OrderStatus.IN_PROCESS) {
@@ -82,10 +86,10 @@ export async function removeOrderAdjustment(orderId: string, adjustmentId: strin
     }
 
     // Delete adjustment
-    await orderRepository.deleteAdjustment(adjustmentId, tx);
+    await orderRepository.deleteAdjustment(adjustmentId, currentTx);
 
     // Recalculate
-    const adjustments = await orderRepository.getAdjustments(orderId, tx);
+    const adjustments = await orderRepository.getAdjustments(orderId, currentTx);
     const adjustmentTotal = adjustments.reduce(
       (sum, adj) => sum.add(adj.amount as Prisma.Decimal), 
       new Prisma.Decimal(0)
@@ -97,7 +101,7 @@ export async function removeOrderAdjustment(orderId: string, adjustmentId: strin
     await orderRepository.update(orderId, {
       adjustmentTotal,
       totalPrice,
-    }, tx);
+    }, currentTx);
 
     await orderRepository.createEvent({
       orderId,
@@ -106,6 +110,9 @@ export async function removeOrderAdjustment(orderId: string, adjustmentId: strin
       actorId,
       actorRole: UserRole.ADMIN,
       notes: `Financial Adjustment removed. Totals recalculated.`,
-    }, tx);
-  });
+    }, currentTx);
+  };
+
+  if (tx) return execute(tx);
+  return runManagedTransaction(signal, execute);
 }

@@ -116,7 +116,6 @@ export async function deleteCustomer(id: string) {
     });
 
     revalidatePath("/admin/customers");
-    return { success: true };
   } catch (error: unknown) {
     console.error("DELETE CUSTOMER ERROR:", error);
     throw new Error(error instanceof Error ? error.message : "Could not delete user.");

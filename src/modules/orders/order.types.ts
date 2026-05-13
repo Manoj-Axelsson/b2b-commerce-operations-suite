@@ -1,4 +1,4 @@
-import { OrderStatus, Order, OrderItem, Product, OrderEvent, User, OrderAdjustment, AdjustmentType } from "@/generated/prisma/client";
+import { OrderStatus, Order, OrderItem, Product, OrderEvent, User, OrderAdjustment, AdjustmentType, Prisma } from "@/generated/prisma/client";
 
 export type OrderWithItems = Order & {
   items: (OrderItem & { product: Product })[];
@@ -17,6 +17,7 @@ export interface UpdateStatusParams {
   actorRole: string;
   notes?: string;
   signal?: AbortSignal;
+  tx?: Prisma.TransactionClient;
 }
 
 export interface AddAdjustmentParams {
@@ -26,4 +27,5 @@ export interface AddAdjustmentParams {
   description?: string;
   actorId: string;
   signal?: AbortSignal;
+  tx?: Prisma.TransactionClient;
 }
