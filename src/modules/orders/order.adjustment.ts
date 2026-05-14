@@ -3,6 +3,7 @@ import { addAdjustmentSchema } from "./order.validators";
 import { AddAdjustmentParams } from "./order.types";
 import { OrderStatus, UserRole, Prisma } from "@/generated/prisma/client";
 import { runManagedTransaction } from "@/lib/managedTransaction";
+import { BusinessError } from "@/lib/error";
 
 /**
  * Service to handle financial adjustments (Discounts, Fees, etc.)
@@ -22,11 +23,11 @@ export async function addOrderAdjustment({
   const execute = async (currentTx: Prisma.TransactionClient) => {
     // 2. Fetch Order & Verify State
     const order = await orderRepository.findById(validated.orderId, currentTx);
-    if (!order) throw new Error(`Order ${validated.orderId} not found`);
-    
+    if (!order) throw new BusinessError(`Order ${validated.orderId} not found`, 404);
+
     // STRICT GUARD: Adjustments only allowed during IN_PROCESS
     if (order.status !== OrderStatus.IN_PROCESS) {
-      throw new Error(`Adjustments are locked for orders in ${order.status} state`);
+      throw new BusinessError(`Adjustments are locked for orders in ${order.status} state`, 422);
     }
 
     // 3. Create the Adjustment
@@ -79,10 +80,10 @@ export async function addOrderAdjustment({
 export async function removeOrderAdjustment(orderId: string, adjustmentId: string, actorId: string, signal?: AbortSignal, tx?: Prisma.TransactionClient) {
   const execute = async (currentTx: Prisma.TransactionClient) => {
     const order = await orderRepository.findById(orderId, currentTx);
-    if (!order) throw new Error(`Order ${orderId} not found`);
-    
+    if (!order) throw new BusinessError(`Order ${orderId} not found`, 404);
+
     if (order.status !== OrderStatus.IN_PROCESS) {
-      throw new Error(`Financials are locked for orders in ${order.status} state`);
+      throw new BusinessError(`Financials are locked for orders in ${order.status} state`, 422);
     }
 
     // Delete adjustment

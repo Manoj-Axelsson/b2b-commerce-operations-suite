@@ -43,8 +43,10 @@ function normalizeStreet(street: string, houseNumber: string | null): string {
  *    - Create initial Audit Log
  */
 export async function createOrderFromCart(input: CreateOrderFromCartInput): Promise<CheckoutOrder> {
-  const { signal } = input;
-  const validated = createOrderFromCartSchema.parse(input);
+  // Separate signal before parse — Zod strips unknown keys, so signal must be
+  // captured first to avoid a silent dependency on the raw, unvalidated input.
+  const { signal, ...rest } = input;
+  const validated = createOrderFromCartSchema.parse(rest);
   const now = new Date();
 
   // 0. Resource Protection: Early Abort Check

@@ -1,8 +1,8 @@
-import { AdjustmentType, OrderStatus, PaymentStatus } from "../../generated/prisma/client";
-import prisma from "../../lib/prisma";
+import { AdjustmentType, OrderStatus, PaymentStatus } from "@/generated/prisma/client";
+import prisma from "@/lib/prisma";
 import { addOrderAdjustment } from "./order.adjustment";
 import { updateOrderStatus } from "./order.services";
-import { runManagedTransaction } from "../../lib/managedTransaction";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
  * Workflow Verification Script
