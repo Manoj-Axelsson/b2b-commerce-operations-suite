@@ -130,6 +130,12 @@ model Product {
   @@map("product")
 }
 
+// One cart per user — created on first write, cleared on order placement.
+//
+// CartItem.quantity is ADVISORY: a draft of user intent, clamped to stock at write
+// time but never reserved. Authoritative stock checks happen during order placement
+// under row-level locks on Product. Cart writes must remain non-blocking; do not
+// add stock decrements or reservations here.
 model Cart {
   id        String     @id @default(cuid())
   userId    String     @unique

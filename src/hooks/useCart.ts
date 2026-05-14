@@ -45,7 +45,6 @@ export function useCart(): CartState {
             setItems(data?.items ?? []);
             setError(null);
         } catch (err) {
-            // Only log if it's a real error (not expected guest/dev states)
             console.error("useCart sync error:", err instanceof Error ? err.message : err);
             setError("Failed to sync cart");
         } finally {
@@ -76,88 +75,100 @@ export function useCart(): CartState {
         [items]
     );
 
-    const addToCart = useCallback(
-        async (productId: string) => {
-
+    // Single declarative mutation primitive: set the cart line for a product to
+    // a target quantity. The server clamps to stock and returns the authoritative
+    // {quantity, stock}. All three public mutators are thin wrappers over this.
+    const writeQuantity = useCallback(
+        async (productId: string, target: number) => {
+            // Optimistic local update — corrected by the server response below.
             setItems((prev) => {
+                if (target <= 0) return prev.filter((i) => i.productId !== productId);
                 const existing = prev.find((i) => i.productId === productId);
                 if (existing) {
                     return prev.map((i) =>
-                        i.productId === productId
-                            ? { ...i, quantity: i.quantity + 1 }
-                            : i
+                        i.productId === productId ? { ...i, quantity: target } : i
                     );
                 }
-
-                return [...prev, { productId, quantity: 1, product: { id: productId, name: "", price: 0, quantity: 9999 } }];
+                // Unknown product — high stock placeholder so isAtStockLimit
+                // returns false until the next sync fills in real product data.
+                return [
+                    ...prev,
+                    {
+                        productId,
+                        quantity: target,
+                        product: { id: productId, name: "", price: 0, quantity: 9999 },
+                    },
+                ];
             });
-
-            try {
-                const res = await fetch("/api/cart/add", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ productId }),
-                });
-
-                if (!res.ok) throw new Error("Add to cart failed");
-
-                await syncCart();
-            } catch (err) {
-                console.error("Add to cart error:", err instanceof Error ? err.message : err);
-                await syncCart();
-            }
-        },
-        [syncCart]
-    );
-
-    const updateQuantity = useCallback(
-        async (productId: string, quantity: number) => {
-            // Optimistic update
-            setItems((prev) =>
-                prev.map((i) =>
-                    i.productId === productId ? { ...i, quantity } : i
-                )
-            );
 
             try {
                 const res = await fetch("/api/cart/update", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ productId, quantity }),
+                    body: JSON.stringify({ productId, quantity: target }),
                 });
 
-                if (!res.ok) throw new Error("Update quantity failed");
+                if (!res.ok) throw new Error(`Cart write failed (${res.status})`);
 
-                await syncCart();
+                const { quantity, stock } = (await res.json()) as {
+                    productId: string;
+                    quantity: number;
+                    stock: number | null;
+                };
+
+                // Reconcile local state to the server's clamped quantity.
+                const wasUnknown = !items.find((i) => i.productId === productId);
+                setItems((prev) => {
+                    if (quantity <= 0) return prev.filter((i) => i.productId !== productId);
+                    const existing = prev.find((i) => i.productId === productId);
+                    if (existing) {
+                        return prev.map((i) =>
+                            i.productId === productId
+                                ? {
+                                      ...i,
+                                      quantity,
+                                      product:
+                                          stock != null
+                                              ? { ...i.product, quantity: stock }
+                                              : i.product,
+                                  }
+                                : i
+                        );
+                    }
+                    return prev;
+                });
+
+                // First-time insert with no prior product row — pull the full record
+                // (name/price) via a one-off sync.
+                if (wasUnknown && quantity > 0) await syncCart();
             } catch (err) {
-                console.error("Update quantity error:", err instanceof Error ? err.message : err);
+                console.error("Cart write error:", err instanceof Error ? err.message : err);
                 await syncCart();
             }
         },
-        [syncCart]
+        [items, syncCart]
+    );
+
+    const addToCart = useCallback(
+        async (productId: string) => {
+            const current = items.find((i) => i.productId === productId)?.quantity ?? 0;
+            await writeQuantity(productId, current + 1);
+        },
+        [items, writeQuantity]
+    );
+
+    const updateQuantity = useCallback(
+        async (productId: string, quantity: number) => {
+            await writeQuantity(productId, quantity);
+        },
+        [writeQuantity]
     );
 
     const removeFromCart = useCallback(
         async (productId: string) => {
-
-            setItems((prev) => prev.filter((i) => i.productId !== productId));
-
-            try {
-                const res = await fetch("/api/cart/remove", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ productId }),
-                });
-
-                if (!res.ok) throw new Error("Remove from cart failed");
-
-                await syncCart();
-            } catch (err) {
-                console.error("Remove from cart error:", err instanceof Error ? err.message : err);
-                await syncCart();
-            }
+            await writeQuantity(productId, 0);
         },
-        [syncCart]
+        [writeQuantity]
     );
 
     const clearCart = useCallback(async () => {

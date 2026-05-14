@@ -1,69 +1,114 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { BusinessError, formatSafeResponse } from "@/lib/error";
+import { runManagedTransaction } from "@/lib/managedTransaction";
 
-// POST /api/cart/update — sets the quantity of a cart item to an explicit value
-// Removes the item if quantity drops to zero or below
+// POST /api/cart/update — sets the user's cart line for a product to an explicit quantity.
+//
+// CONTRACT: cart quantity is ADVISORY, not authoritative.
+//   - This endpoint clamps to product.quantity as seen at write time, but does NOT
+//     lock or reserve stock. An admin (or another order) may reduce stock between
+//     this write and the eventual checkout, leaving cart.quantity > product.quantity
+//     for a window. That is acceptable.
+//   - The HARD stock guarantee lives in order placement / admin order review, which
+//     re-validates every line item against current stock under a row-level lock
+//     before persisting the order.
+//
+// Treat the cart as a draft of intent. Treat the order as the source of truth.
+
+const MAX_QUANTITY = 999;
+
+const bodySchema = z.object({
+    productId: z.string().min(1),
+    quantity: z.number().int().min(0).max(MAX_QUANTITY),
+});
+
 export async function POST(request: NextRequest) {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user) {
+        return new Response("Unauthorized", { status: 401 });
+    }
+
+    // Only approved users can write to the cart (matches sibling cart routes).
+    const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { isApproved: true },
+    });
+    if (!dbUser?.isApproved) {
+        return new Response("Forbidden: account pending approval", { status: 403 });
+    }
+
+    let raw: unknown;
     try {
-        const session = await auth.api.getSession({ headers: request.headers });
+        raw = await request.json();
+    } catch {
+        return new Response("Invalid JSON", { status: 400 });
+    }
 
-        if (!session?.user) {
-            return new Response("Unauthorized", { status: 401 });
-        }
+    const parsed = bodySchema.safeParse(raw);
+    if (!parsed.success) {
+        return new Response("Invalid body", { status: 400 });
+    }
+    const { productId, quantity } = parsed.data;
+    const userId = session.user.id;
 
-        // Only approved users can access the cart
-        const dbUser = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { isApproved: true },
-        });
-
-        if (!dbUser?.isApproved) {
-            return new Response("Forbidden: account pending approval", { status: 403 });
-        }
-
-        const userId = session.user.id;
-        const body = await request.json();
-        const productId = body.productId as string;
-        const quantity = body.quantity as number;
-
-        if (!productId || quantity == null) {
-            return new Response("Missing productId or quantity", { status: 400 });
-        }
-
-        const cart = await prisma.cart.findUnique({ where: { userId } });
-
-        if (!cart) {
-            return new Response("Cart not found", { status: 404 });
-        }
-
-        // Quantity of zero or below — remove the item instead
-        if (quantity <= 0) {
-            await prisma.cartItem.deleteMany({
-                where: { cartId: cart.id, productId },
+    try {
+        // runManagedTransaction sets statement_timeout / lock_timeout /
+        // idle_in_transaction_session_timeout as SET LOCAL for this txn.
+        // Postgres default isolation (READ COMMITTED) is intentional — see CONTRACT.
+        const result = await runManagedTransaction(request.signal, async (tx) => {
+            // Atomic via INSERT ... ON CONFLICT (userId is @unique on Cart).
+            const cart = await tx.cart.upsert({
+                where: { userId },
+                create: { userId },
+                update: {},
+                select: { id: true },
             });
 
-            return new Response(null, { status: 204 });
-        }
+            // Declarative zero — remove the line entirely. Idempotent.
+            if (quantity === 0) {
+                await tx.cartItem.deleteMany({
+                    where: { cartId: cart.id, productId },
+                });
+                return { productId, quantity: 0, stock: null as number | null };
+            }
 
-        // Validate quantity does not exceed stock
-        const product = await prisma.product.findUnique({ where: { id: productId } });
+            const product = await tx.product.findUnique({
+                where: { id: productId },
+                select: { quantity: true, isActive: true, isDeleted: true },
+            });
 
-        if (!product) {
-            return new Response("Product not found", { status: 404 });
-        }
+            if (!product || product.isDeleted || !product.isActive) {
+                throw new BusinessError("Product not found", 404);
+            }
 
-        const cappedQuantity = Math.min(quantity, product.quantity);
+            const final = Math.min(quantity, product.quantity);
 
-        await prisma.cartItem.updateMany({
-            where: { cartId: cart.id, productId },
-            data: { quantity: cappedQuantity },
+            // Stock dropped to 0 — collapse to a delete rather than writing a 0-qty row.
+            if (final <= 0) {
+                await tx.cartItem.deleteMany({
+                    where: { cartId: cart.id, productId },
+                });
+                return { productId, quantity: 0, stock: product.quantity };
+            }
+
+            // Single INSERT ... ON CONFLICT DO UPDATE — atomic at the row level.
+            await tx.cartItem.upsert({
+                where: { cartId_productId: { cartId: cart.id, productId } },
+                create: { cartId: cart.id, productId, quantity: final },
+                update: { quantity: final },
+            });
+
+            return { productId, quantity: final, stock: product.quantity };
         });
 
-        return new Response(null, { status: 204 });
+        return NextResponse.json(result);
 
     } catch (error) {
-        console.error("POST /api/cart/update error:", error);
-        return new Response("Internal Server Error", { status: 500 });
+        // BusinessError (incl. 404 thrown inside the txn) and unexpected errors
+        // both flow through the team's masked-response helper.
+        return formatSafeResponse(error);
     }
 }
