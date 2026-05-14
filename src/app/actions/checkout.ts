@@ -3,9 +3,11 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { createOrderFromCart } from "@/modules/checkout/checkout.services";
+import { sendCheckoutOrderReceivedEmail } from "@/modules/checkout/mail.service";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
-import { formatSafeError, BusinessError } from "@/lib/error";
+import { BusinessError, formatSafeError } from "@/lib/error";
 
 export async function processCheckoutAction(formData: FormData): Promise<
   | { success: true; orderId: string }
@@ -28,6 +30,16 @@ export async function processCheckoutAction(formData: FormData): Promise<
 
     revalidatePath("/admin/orders");
     revalidatePath("/shop");
+
+    if (!order.sentToAdminMail) {
+      after(async () => {
+        try {
+          await sendCheckoutOrderReceivedEmail({ orderId: order.id });
+        } catch (error) {
+          console.error(`[CHECKOUT_EMAIL]: Failed to send order email for ${order.id}`, error);
+        }
+      });
+    }
 
     return { success: true, orderId: order.id };
   } catch (error) {
