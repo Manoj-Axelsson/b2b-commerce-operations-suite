@@ -59,7 +59,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
 
             <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
                 <ProductGallery
-                    images={product.images || []}
+                    images={product.images && product.images.length > 0 ? product.images : product.imageUrl ? [product.imageUrl] : []}
                     name={product.name}
                 />
 

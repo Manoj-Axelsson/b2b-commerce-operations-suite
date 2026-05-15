@@ -40,18 +40,11 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                 className="flex flex-col flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold-dark rounded-2xl"
             >
                 <div className="relative aspect-square w-full bg-brand-cream overflow-hidden">
-                    {product.imageUrl ? (
-                        <ProductImage
-                            imageUrl={product.imageUrl}
-                            name={product.name}
-                            priority={priority}
-                        />
-                    ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-linear-to-br from-brand-cream to-white text-brand-primary/20">
-                            <span className="text-5xl font-serif tracking-tighter italic leading-none">Rajput</span>
-                            <span className="text-[0.6rem] font-bold uppercase tracking-[0.5em] mt-1 ml-2 opacity-50">Foods</span>
-                        </div>
-                    )}
+                    <ProductImage
+                        imageUrl={product.imageUrl}
+                        name={product.name}
+                        priority={priority}
+                    />
 
                     {!isInStock && (
                         <div className="absolute inset-0 bg-brand-cream/90 flex items-center justify-center z-10">
@@ -114,8 +107,13 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                     <Link
                         href="/login"
                         className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-brand-border text-brand-primary hover:bg-brand-cream border border-brand-border/60"
+                        title="Log in to order"
                     >
-                        Log in to order
+                        {!isInStock 
+                            ? "Out of stock" 
+                            : isDiscounted 
+                                ? "Offer Available" 
+                                : "In Stock"}
                     </Link>
                 )}
             </div>

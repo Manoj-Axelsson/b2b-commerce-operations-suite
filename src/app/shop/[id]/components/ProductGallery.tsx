@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -11,31 +11,53 @@ interface ProductGalleryProps {
 
 const ProductGallery = ({ images, name }: ProductGalleryProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [hasError, setHasError] = useState(false);
 
-    if (!images || images.length === 0) {
+    const formattedImages = (images || []).map(img => 
+        (img && !img.startsWith('http') && !img.startsWith('/')) ? `/${img}` : img
+    ).filter(Boolean);
+
+    // Reset error if active index or images change
+    useEffect(() => {
+        setHasError(false);
+    }, [activeIndex, images]);
+
+    if (formattedImages.length === 0) {
         return (
-            <div className="flex aspect-square w-full items-center justify-center rounded-3xl border border-brand-border bg-brand-cream text-muted-foreground">
-                <span className="font-serif text-4xl italic tracking-tighter">Rajput</span>
+            <div className="group relative aspect-square w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-border bg-brand-cream shadow-sm flex items-center justify-center">
+                <div className="relative w-[90%] h-[90%] flex items-center justify-center transition-all duration-300 border border-brand-border/60 rounded-2xl shadow-sm bg-white overflow-hidden ring-1 ring-black/5">
+                    <Image
+                        src="/default_product_list.jpg"
+                        alt={name}
+                        fill
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                        className="object-contain group-hover:scale-105 transition-transform duration-700"
+                        priority
+                        loading="eager"
+                    />
+                </div>
             </div>
         );
     }
 
-    const nextImage = () => setActiveIndex((prev) => (prev + 1) % images.length);
-    const prevImage = () => setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+    const nextImage = () => setActiveIndex((prev) => (prev + 1) % formattedImages.length);
+    const prevImage = () => setActiveIndex((prev) => (prev - 1 + formattedImages.length) % formattedImages.length);
 
     return (
         <div className="flex flex-col gap-3 sm:gap-4">
             <div className="group relative aspect-square w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-border bg-white shadow-sm transition-shadow hover:shadow-md">
                 <Image
-                    src={images[activeIndex]}
+                    src={hasError ? "/default_product_list.jpg" : formattedImages[activeIndex]}
                     alt={`${name} - View ${activeIndex + 1}`}
                     fill
                     sizes="(min-width: 1024px) 50vw, 100vw"
                     className="object-contain p-6 sm:p-8 transition-transform duration-700 group-hover:scale-105"
                     priority
+                    loading="eager"
+                    onError={() => setHasError(true)}
                 />
 
-                {images.length > 1 && (
+                {formattedImages.length > 1 && (
                     <>
                         <button
                             onClick={prevImage}
@@ -59,9 +81,9 @@ const ProductGallery = ({ images, name }: ProductGalleryProps) => {
                 )}
             </div>
 
-            {images.length > 1 && (
+            {formattedImages.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Product images">
-                    {images.map((img, idx) => (
+                    {formattedImages.map((img, idx) => (
                         <button
                             key={idx}
                             onClick={() => setActiveIndex(idx)}

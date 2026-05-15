@@ -50,7 +50,7 @@ export default async function AdminProductsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {products.map((product) => {
+            {products.map((product, index) => {
               const hasOrders = product._count.orderItems > 0;
 
               return (
@@ -59,19 +59,18 @@ export default async function AdminProductsPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded border bg-gray-50 shrink-0 overflow-hidden relative">
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.name}
-                            fill
-                            className="object-contain p-1"
-                            sizes="40px"
-                          />
-                        ) : (
-                          <span className="text-[8px] text-gray-300 italic flex items-center justify-center h-full">
-                            No img
-                          </span>
-                        )}
+                        <Image
+                          src={
+                            product.imageUrl 
+                              ? (product.imageUrl.startsWith('http') || product.imageUrl.startsWith('/') ? product.imageUrl : `/${product.imageUrl}`)
+                              : "/default_product_list.jpg"
+                          }
+                          alt={product.name}
+                          fill
+                          className="object-contain p-1"
+                          sizes="40px"
+                          priority={index < 8}
+                        />
                       </div>
                       <div>
                         <div className="font-semibold text-gray-900">{product.name}</div>
