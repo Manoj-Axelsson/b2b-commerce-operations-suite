@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { Product } from "@/types/shop";
-import { sortProductsImagesFirst } from "@/lib/utils";
+import { sortProductsImagesFirst, checkIsAdmin } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +35,7 @@ const ShopPage = async ({ searchParams }: ShopPageProps) => {
 
     // Check session server-side — price gating is enforced server-side
     const session = await auth.api.getSession({ headers: await headers() });
+    const isAdmin = checkIsAdmin(session?.user);
 
     let isApproved = false;
 
@@ -43,7 +44,7 @@ const ShopPage = async ({ searchParams }: ShopPageProps) => {
             where: { id: session.user.id },
             select: { isApproved: true },
         });
-        isApproved = dbUser?.isApproved ?? false;
+        isApproved = (dbUser?.isApproved ?? false) || isAdmin;
     }
 
     // Parse weight param — stored as "10-kg" → { weightValue: 10, weightUnit: "kg" }

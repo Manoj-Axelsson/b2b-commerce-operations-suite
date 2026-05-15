@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { BusinessError, formatSafeResponse } from "@/lib/error";
 import { runManagedTransaction } from "@/lib/managedTransaction";
+import { checkIsAdmin } from "@/lib/utils";
 
 // POST /api/cart/update — sets the user's cart line for a product to an explicit quantity.
 //
@@ -31,12 +32,12 @@ export async function POST(request: NextRequest) {
         return new Response("Unauthorized", { status: 401 });
     }
 
-    // Only approved users can write to the cart (matches sibling cart routes).
+    // Only approved users (or admins) can write to the cart (matches sibling cart routes).
     const dbUser = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { isApproved: true },
+        select: { isApproved: true, role: true, email: true },
     });
-    if (!dbUser?.isApproved) {
+    if (!dbUser?.isApproved && !checkIsAdmin(dbUser)) {
         return new Response("Forbidden: account pending approval", { status: 403 });
     }
 

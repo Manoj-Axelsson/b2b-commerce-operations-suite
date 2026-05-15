@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { formatSafeResponse } from "@/lib/error";
+import { checkIsAdmin } from "@/lib/utils";
 
 // GET /api/cart — returns the current user's cart, creating one if it doesn't exist
 export async function GET(request: NextRequest) {
@@ -12,13 +13,13 @@ export async function GET(request: NextRequest) {
             return new Response("Unauthorized", { status: 401 });
         }
 
-        // Only approved users can access the cart
+        // Only approved users (or admins) can access the cart
         const dbUser = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { isApproved: true },
+            select: { isApproved: true, role: true, email: true },
         });
 
-        if (!dbUser?.isApproved) {
+        if (!dbUser?.isApproved && !checkIsAdmin(dbUser)) {
             return new Response("Forbidden: account pending approval", { status: 403 });
         }
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
             const isActiveOffer = p.discountPrice != null &&
                 (!p.discountStart || now >= p.discountStart) &&
                 (!p.discountEnd || now <= p.discountEnd);
-            
+
             const effectivePrice = isActiveOffer ? p.discountPrice! : p.price;
 
             return {
@@ -81,13 +82,13 @@ export async function DELETE(request: NextRequest) {
             return new Response("Unauthorized", { status: 401 });
         }
 
-        // Only approved users can access the cart
+        // Only approved users (or admins) can access the cart
         const dbUser = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { isApproved: true },
+            select: { isApproved: true, role: true, email: true },
         });
 
-        if (!dbUser?.isApproved) {
+        if (!dbUser?.isApproved && !checkIsAdmin(dbUser)) {
             return new Response("Forbidden: account pending approval", { status: 403 });
         }
 

@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ADMIN_EMAIL } from "@/lib/utils";
+import { checkIsAdmin } from "@/lib/utils";
 
 export default async function AdminHomePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
+  const isAdmin = checkIsAdmin(session?.user);
   if (!session || !isAdmin) {
     redirect("/login");
   }

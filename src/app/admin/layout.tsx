@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { logout } from "@/lib/auth-actions";
-import { ADMIN_EMAIL } from "@/lib/utils";
+import { checkIsAdmin } from "@/lib/utils";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // A user is treated as an admin if they have the primary admin email
   // OR if their database role is explicitly set to "admin".
-  const isAdmin = session.user.email === ADMIN_EMAIL || (session.user as { role?: string }).role === "admin";
+  const isAdmin = checkIsAdmin(session.user);
   if (!isAdmin) {
     redirect("/account");
   }
@@ -72,6 +72,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             className="block p-2 text-xs text-yellow-700 hover:bg-yellow-100 rounded transition-colors mb-2"
           >
             🔐 Manage 2FA
+          </Link>
+
+          <Link
+            href="/account"
+            className="block p-2 text-sm font-semibold text-yellow-800 hover:bg-yellow-100 rounded transition-colors mb-4 border border-yellow-200"
+          >
+            👤 My Account
           </Link>
 
           <form action={logout}>

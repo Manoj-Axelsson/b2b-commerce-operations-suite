@@ -4,6 +4,7 @@
 
 import prisma from "@/lib/prisma";
 import { NavbarClient } from "./NavbarClient";
+import { checkIsAdmin } from "@/lib/utils";
 import type { NavbarSession } from "@/lib/session";
 
 interface NavbarProps {
@@ -12,7 +13,7 @@ interface NavbarProps {
 
 export default async function Navbar({ session }: NavbarProps) {
   const isLoggedIn = !!session?.user;
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = checkIsAdmin(session?.user);
 
   // Fetch isApproved from DB — needed to gate the cart icon.
   // Only runs when a user is logged in; resolves to false otherwise.

@@ -9,13 +9,13 @@ interface NavbarCartButtonProps {
   isApproved: boolean;
 }
 
-// Cart icon rendered inside the Navbar — replaces the old floating GlobalCartButton.
-// Returns null for admins and unapproved users (same rules as the old floating button).
-export const NavbarCartButton = ({ isAdmin, isApproved }: NavbarCartButtonProps) => {
-  const { totalItems } = useCartContext();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-  if (isAdmin || !isApproved) return null;
+  // Cart icon rendered inside the Navbar — replaces the old floating GlobalCartButton.
+  // Returns null for unapproved users, unless they are an admin.
+  export const NavbarCartButton = ({ isAdmin, isApproved }: NavbarCartButtonProps) => {
+    const { totalItems } = useCartContext();
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  
+    if (!isAdmin && !isApproved) return null;
 
   return (
     <>

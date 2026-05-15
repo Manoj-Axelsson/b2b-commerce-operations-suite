@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
+import { cn, checkIsAdmin } from "@/lib/utils";
 import ProductGallery from "./components/ProductGallery";
 import AddToCartAction from "./components/AddToCartAction";
 
@@ -24,6 +24,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
 
     // Determine if the current user is approved to see prices and add to cart
     const session = await auth.api.getSession({ headers: await headers() });
+    const isAdmin = checkIsAdmin(session?.user);
 
     const isLoggedIn = !!session?.user;
     let isApproved = false;
@@ -33,7 +34,7 @@ const ProductDetailPage = async ({ params }: ProductPageProps) => {
             where: { id: session.user.id },
             select: { isApproved: true },
         });
-        isApproved = dbUser?.isApproved ?? false;
+        isApproved = (dbUser?.isApproved ?? false) || isAdmin;
     }
 
     const now = new Date();

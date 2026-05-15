@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ADMIN_EMAIL, normalizeProductImagePath } from "@/lib/utils";
+import { ADMIN_EMAIL, normalizeProductImagePath, checkIsAdmin } from "@/lib/utils";
 import { AdminProductUpdateSchema } from "@/app/admin/inventory/types/schema";
 import { runManagedTransaction } from "@/lib/managedTransaction";
 
@@ -17,7 +17,7 @@ const verifyAdmin = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
+  const isAdmin = checkIsAdmin(session?.user);
   if (!session || !isAdmin) {
     throw new Error("Unauthorized. Admin access required.");
   }

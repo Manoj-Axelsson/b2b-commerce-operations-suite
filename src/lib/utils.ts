@@ -6,6 +6,15 @@ import { twMerge } from "tailwind-merge";
 // In production: set ADMIN_EMAIL in the server's environment variables.
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "rajputfoods@gmail.com";
 
+/**
+ * Standardized check to determine if a user has administrative privileges.
+ * A user is an admin if their email matches ADMIN_EMAIL or their role is "admin".
+ */
+export function checkIsAdmin(user?: { email?: string | null; role?: string | null } | null): boolean {
+    if (!user) return false;
+    return user.email === ADMIN_EMAIL || user.role === "admin";
+}
+
 const DEFAULT_LOCALE = "sv-SE";
 const DEFAULT_CURRENCY = "SEK";
 
