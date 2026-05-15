@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { normalizeProductImagePath } from "@/lib/utils";
 
 interface ProductImageProps {
     imageUrl: string | null | undefined;
@@ -14,15 +15,14 @@ interface ProductImageProps {
 // it falls back to the refactored_logo.webp image.
 export const ProductImage = ({ imageUrl, name, priority }: ProductImageProps) => {
     const [hasError, setHasError] = useState(false);
+    const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
 
-    useEffect(() => {
+    if (imageUrl !== prevImageUrl) {
+        setPrevImageUrl(imageUrl);
         setHasError(false);
-    }, [imageUrl]);
-
-    let formattedImageUrl = imageUrl;
-    if (formattedImageUrl && !formattedImageUrl.startsWith('http') && !formattedImageUrl.startsWith('/')) {
-        formattedImageUrl = `/${formattedImageUrl}`;
     }
+
+    const formattedImageUrl = normalizeProductImagePath(imageUrl);
 
     const isFallback = hasError || !formattedImageUrl;
     const imgSrc = isFallback ? "/default_product_list.jpg" : formattedImageUrl as string;

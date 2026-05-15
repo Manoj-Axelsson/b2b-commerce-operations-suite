@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ADMIN_EMAIL } from "@/lib/utils";
+import { ADMIN_EMAIL, normalizeProductImagePath } from "@/lib/utils";
 import { AdminProductUpdateSchema } from "@/app/admin/inventory/types/schema";
 import { runManagedTransaction } from "@/lib/managedTransaction";
 
@@ -55,7 +55,7 @@ export async function createProduct(formData: FormData) {
     brand: formData.get("brand") as string,
     articleNo: formData.get("articleNo") as string,
     description: (formData.get("description") as string) || null,
-    imageUrl: (formData.get("imageUrl") as string) || null,
+    imageUrl: normalizeProductImagePath(formData.get("imageUrl") as string),
     price: parseFormInt(formData.get("price")) ?? 0,
     weightValue: parseFormInt(formData.get("weightValue")) ?? 0,
     weightUnit: formData.get("weightUnit") as string,
@@ -134,7 +134,7 @@ export async function updateProduct(formData: FormData) {
     brand: formData.get("brand") as string,
     articleNo: formData.get("articleNo") as string,
     description: (formData.get("description") as string) || null,
-    imageUrl: (formData.get("imageUrl") as string) || null,
+    imageUrl: normalizeProductImagePath(formData.get("imageUrl") as string),
     price: parseFormInt(formData.get("price")) ?? 0,
     weightValue: parseFormInt(formData.get("weightValue")) ?? 0,
     weightUnit: formData.get("weightUnit") as string,

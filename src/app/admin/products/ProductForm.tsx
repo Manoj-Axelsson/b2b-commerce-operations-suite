@@ -295,10 +295,9 @@ export function ProductForm({ categories, product }: ProductFormProps) {
             name="imageUrl"
             defaultValue={product?.imageUrl ?? ""}
             className="border rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-yellow-400 outline-none"
-            placeholder="e.g. /images/products/basmati.jpg" />
+            placeholder="e.g. basmati.jpg or /images/products/basmati.jpg" />
           <p className="text-[10px] text-gray-400">
-            Upload image files to <code>public/images/products/</code> and enter the path here.
-            Phase 2 will add drag-and-drop uploads directly.
+            Just enter the filename (e.g. <code>basmati.jpg</code>) and we&apos;ll automatically look for it in <code>public/images/products/</code>.
           </p>
         </div>
       </section>

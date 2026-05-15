@@ -35,4 +35,32 @@ export function sortProductsImagesFirst<T extends { imageUrl?: string | null; na
         return a.name.localeCompare(b.name, DEFAULT_LOCALE);
     });
 }
+
+// Normalize product image paths entered by admins.
+// 1. External URLs (http/https) are left as-is.
+// 2. Local paths are prefixed with /images/products/ if they don't already have it.
+// 3. Leading slashes are ensured for all local paths.
+export function normalizeProductImagePath(path: string | null | undefined): string | null {
+    if (!path) return null;
+    const trimmed = path.trim();
+    if (trimmed === "") return null;
+
+    // Preserve external URLs and Data URIs
+    if (trimmed.startsWith("http") || trimmed.startsWith("data:")) {
+        return trimmed;
+    }
+
+    // Standardize local path prefix
+    const standardPrefix = "/images/products/";
+
+    // Check if it already has the standard prefix (with or without leading slash)
+    if (trimmed.startsWith(standardPrefix) || trimmed.startsWith("images/products/")) {
+        return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    }
+
+    // It's a raw filename or a non-standard path — move it to the products folder.
+    // Strip any leading slash first to avoid double slashes.
+    const cleanPath = trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
+    return `${standardPrefix}${cleanPath}`;
+}
 

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, normalizeProductImagePath } from "@/lib/utils";
 import { DeleteProductButton } from "./DeleteProductButton";
 import { ToggleVisibilityButton } from "./ToggleVisibilityButton";
 
@@ -60,11 +60,7 @@ export default async function AdminProductsPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded border bg-gray-50 shrink-0 overflow-hidden relative">
                         <Image
-                          src={
-                            product.imageUrl 
-                              ? (product.imageUrl.startsWith('http') || product.imageUrl.startsWith('/') ? product.imageUrl : `/${product.imageUrl}`)
-                              : "/default_product_list.jpg"
-                          }
+                          src={normalizeProductImagePath(product.imageUrl) || "/default_product_list.jpg"}
                           alt={product.name}
                           fill
                           className="object-contain p-1"

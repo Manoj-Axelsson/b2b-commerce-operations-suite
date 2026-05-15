@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, normalizeProductImagePath } from "@/lib/utils";
 
 interface ProductGalleryProps {
     images: string[];
@@ -13,14 +13,18 @@ const ProductGallery = ({ images, name }: ProductGalleryProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [hasError, setHasError] = useState(false);
 
-    const formattedImages = (images || []).map(img => 
-        (img && !img.startsWith('http') && !img.startsWith('/')) ? `/${img}` : img
-    ).filter(Boolean);
+    const formattedImages = (images || [])
+        .map(img => normalizeProductImagePath(img))
+        .filter((img): img is string => img !== null);
 
-    // Reset error if active index or images change
-    useEffect(() => {
+    const [prevActiveIndex, setPrevActiveIndex] = useState(activeIndex);
+    const [prevImages, setPrevImages] = useState(images);
+
+    if (activeIndex !== prevActiveIndex || images !== prevImages) {
+        setPrevActiveIndex(activeIndex);
+        setPrevImages(images);
         setHasError(false);
-    }, [activeIndex, images]);
+    }
 
     if (formattedImages.length === 0) {
         return (
