@@ -13,16 +13,7 @@ export const metadata: Metadata = {
 
 // Logic for 3-day window notifications (Offers starting or ending)
 
-function formatMsRemaining(ms: number): string {
-  const hours = Math.floor(ms / (1000 * 60 * 60));
-  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
 
-  const hLabel = hours === 1 ? "one hour" : `${hours} hours`;
-  const mLabel = minutes === 1 ? "one minute" : `${minutes} minutes`;
-
-  if (hours > 0) return `${hLabel} and ${mLabel}`;
-  return mLabel;
-}
 
 function getPromotionNotification(start: Date | null, end: Date | null): PromotionAlert {
   if (!start || !end) return { status: "STABLE" };
@@ -101,7 +92,7 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
   ]);
 
   // 2. Fetch the paginated products for the table
-  const [products, pendingOrders] = await Promise.all([
+  const [_products, pendingOrders] = await Promise.all([
     prisma.product.findMany({
       where: {
         isDeleted: false,

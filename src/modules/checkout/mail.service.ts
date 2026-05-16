@@ -228,7 +228,7 @@ export async function sendOrderStatusUpdateEmail(
   }
 
   const orderNumber = order.id.slice(-6).toUpperCase();
-  let statusDisplay = newStatus.replace(/_/g, " ");
+  const statusDisplay = newStatus.replace(/_/g, " ");
   let subject = `Order #${orderNumber} status update`;
   let title = "Order Status Update";
   let content = `The status of your order <strong>#${orderNumber}</strong> has been updated to <strong>${statusDisplay}</strong>.`;

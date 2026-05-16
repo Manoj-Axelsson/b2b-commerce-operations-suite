@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ADMIN_EMAIL, normalizeProductImagePath, checkIsAdmin } from "@/lib/utils";
+import { normalizeProductImagePath, checkIsAdmin } from "@/lib/utils";
 import { AdminProductUpdateSchema } from "@/app/admin/inventory/types/schema";
 import { runManagedTransaction } from "@/lib/managedTransaction";
 

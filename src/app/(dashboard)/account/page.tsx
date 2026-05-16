@@ -25,9 +25,11 @@ export default async function AccountPage() {
         discountPrice: { not: null },
         OR: [
           { discountStart: null },
+          // eslint-disable-next-line react-hooks/purity
           { discountStart: { lte: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) } } // Starting in next 3 days
         ],
         AND: [
+          // eslint-disable-next-line react-hooks/purity
           { OR: [{ discountEnd: null }, { discountEnd: { gte: new Date() } }] }
         ]
       },
