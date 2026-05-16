@@ -79,8 +79,34 @@ export async function updateOrderStatus({
   };
 
   // 3. Execution Strategy: Join existing OR start new managed transaction
-  if (tx) return execute(tx);
-  return runManagedTransaction(signal, execute);
+  let result: Awaited<ReturnType<typeof execute>>;
+  if (tx) {
+    result = await execute(tx);
+  } else {
+    result = await runManagedTransaction(signal, execute);
+  }
+
+  // 4. Post-Transaction Hooks: Send Customer Notification
+  // We use Next.js 'after' to send the email without blocking the response
+  try {
+    const { after } = await import("next/server");
+    after(async () => {
+      try {
+        const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
+        await sendOrderStatusUpdateEmail(orderId, nextStatus, notes);
+      } catch (error) {
+        console.error(`[ORDER_EMAIL_HOOK]: Failed to notify customer of status change to ${nextStatus}`, error);
+      }
+    });
+  } catch (e) {
+    // If 'after' is not available (e.g. background task), send synchronously
+    const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
+    await sendOrderStatusUpdateEmail(orderId, nextStatus, notes).catch(err => {
+      console.error("[ORDER_EMAIL_SYNC]: Failed to send notification", err);
+    });
+  }
+
+  return result;
 }
 
 /**

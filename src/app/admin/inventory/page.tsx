@@ -101,19 +101,28 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
   ]);
 
   // 2. Fetch the paginated products for the table
-  const products = await prisma.product.findMany({
-    where: {
-      isDeleted: false,
-      ...(name ? { name: { contains: name, mode: "insensitive" } } : {}),
-      ...(category ? { categoryId: category } : {}),
-    },
-    orderBy: 
-      sort === "price_asc" ? { price: "asc" } :
-      sort === "price_desc" ? { price: "desc" } :
-      { name: "asc" },
-    take: pageSize,
-    skip: (currentPage - 1) * pageSize,
-  });
+  const [products, pendingOrders] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        isDeleted: false,
+        ...(name ? { name: { contains: name, mode: "insensitive" } } : {}),
+        ...(category ? { categoryId: category } : {}),
+      },
+      orderBy:
+        sort === "price_asc" ? { price: "asc" } :
+          sort === "price_desc" ? { price: "desc" } :
+            { name: "asc" },
+      take: pageSize,
+      skip: (currentPage - 1) * pageSize,
+    }),
+    prisma.order.findMany({
+      where: { status: "IN_PROCESS" },
+      include: {
+        user: { select: { name: true, email: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    })
+  ]);
 
   const restockNeeded = allRelevantProducts.filter((p) => p.quantity <= p.minQuantity);
   const priorityPromotions = allRelevantProducts.filter((p) => {
@@ -126,10 +135,10 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
   return (
     <main className="p-6 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Rajput Foods Inventory</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-rajput-gold">Admin Command Center</h1>
         <div className="flex gap-2">
           <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            Total items: {products.length}
+            Inventory: {allRelevantProducts.length} items
           </span>
         </div>
       </div>
@@ -138,59 +147,84 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
         <InventoryFilters categories={categories} />
       </Suspense>
 
-      {/* NEW SECTION: Promotion Alerts (The 3-Day Rule) */}
-
-      {priorityPromotions.length > 0 && (
-        <section className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-          <h2 className="text-lg font-bold text-amber-800 mb-3 flex items-center justify-center gap-2">
-            Promotion Alerts
-          </h2>
-          <div className="flex flex-col gap-2 max-w-2xl mx-auto">
-            {priorityPromotions.map((p) => {
-              const alert = getPromotionNotification(p.discountStart, p.discountEnd);
-              const isUrgent = alert.isUrgent;
-
-              return (
-                <div key={p.id} className={cn(
-                  "bg-white p-2 px-4 rounded shadow-sm border flex items-center gap-4 transition-all w-full",
-                  isUrgent ? "border-red-400 ring-2 ring-red-100 animate-pulse" : "border-amber-100"
-                )}>
-                  {/* Bullet Point */}
-                  <div className={cn(
-                    "w-2 h-2 rounded-full shrink-0",
-                    isUrgent ? "bg-red-500" : "bg-amber-400"
-                  )} />
-                  
+      {/* ALERT CENTER */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* NEW SECTION: Order Request Alerts */}
+        {pendingOrders.length > 0 && (
+          <section className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h2 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-ping" />
+              New Order Requests ({pendingOrders.length})
+            </h2>
+            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+              {pendingOrders.map((order) => (
+                <Link
+                  key={order.id}
+                  href={`/admin/orders?orderId=${order.id}`}
+                  className="bg-white p-3 rounded shadow-sm border border-blue-100 hover:border-blue-400 hover:shadow-md transition-all flex justify-between items-center group"
+                >
                   <div className="flex-1">
-                    <p className="font-medium text-sm inline-block mr-2">{p.name}</p>
-                    <span className="text-xs text-gray-400">{p.brand}</span>
+                    <p className="font-bold text-sm text-blue-900 group-hover:text-blue-600">
+                      Order #{order.id.slice(-6).toUpperCase()}
+                    </p>
+                    <p className="text-xs text-gray-500">{order.user.name}</p>
                   </div>
+                  <div className="text-right">
+                    <p className="text-xs font-mono text-gray-400">
+                      {new Date(order.createdAt).toLocaleDateString("sv-SE")}
+                    </p>
+                    <p className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">Review Request →</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
-                  <div className="flex items-center gap-4">
-                    <span className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                      alert.status === "STARTING_SOON" ? "bg-blue-100 text-blue-700" : 
-                      alert.status === "ENDING_SOON" ? "bg-orange-100 text-orange-700" :
-                      "bg-green-100 text-green-700",
-                      isUrgent && "bg-red-600 text-white"
-                    )}>
-                      {alert.status.replace("_", " ")}
-                    </span>
-                    {alert.msRemaining && (
+        {/* SECTION: Promotion Alerts (The 3-Day Rule) */}
+        {priorityPromotions.length > 0 && (
+          <section className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <h2 className="text-lg font-bold text-amber-800 mb-3 flex items-center gap-2">
+              Promotion Alerts ({priorityPromotions.length})
+            </h2>
+            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+              {priorityPromotions.map((p) => {
+                const alert = getPromotionNotification(p.discountStart, p.discountEnd);
+                const isUrgent = alert.isUrgent;
+
+                return (
+                  <div key={p.id} className={cn(
+                    "bg-white p-2 px-4 rounded shadow-sm border flex items-center gap-4 transition-all w-full",
+                    isUrgent ? "border-red-400 ring-2 ring-red-100 animate-pulse" : "border-amber-100"
+                  )}>
+                    <div className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      isUrgent ? "bg-red-500" : "bg-amber-400"
+                    )} />
+
+                    <div className="flex-1">
+                      <p className="font-medium text-sm inline-block mr-2">{p.name}</p>
+                      <span className="text-xs text-gray-400">{p.brand}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
                       <span className={cn(
-                        "text-[10px] font-mono min-w-[120px] text-right",
-                        isUrgent ? "font-bold text-black" : "text-gray-400"
+                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                        alert.status === "STARTING_SOON" ? "bg-blue-100 text-blue-700" :
+                          alert.status === "ENDING_SOON" ? "bg-orange-100 text-orange-700" :
+                            "bg-green-100 text-green-700",
+                        isUrgent && "bg-red-600 text-white"
                       )}>
-                        {isUrgent ? "URGENT: " : ""}{formatMsRemaining(alert.msRemaining)}
+                        {alert.status.replace("_", " ")}
                       </span>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </div>
 
       {/* Existing Restocking Table */}
 

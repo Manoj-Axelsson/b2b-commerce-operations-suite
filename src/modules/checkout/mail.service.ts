@@ -1,10 +1,10 @@
 import "server-only";
 
-import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
+import prisma from "@/lib/prisma";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { z } from "zod";
-import type { SendCheckoutOrderMailInput, CheckoutOrderMailResult } from "./mail.types";
+import type { CheckoutOrderMailResult, SendCheckoutOrderMailInput } from "./mail.types";
 
 const CHECKOUT_EMAIL_TIMEOUT_MS = 5_000;
 
@@ -32,13 +32,17 @@ async function getCheckoutOrderMailPayload(orderId: string) {
 type CheckoutOrderMailPayload = NonNullable<Awaited<ReturnType<typeof getCheckoutOrderMailPayload>>>;
 
 function formatCurrency(value: { toString(): string } | number | null): string {
-  if (value === null) return "0 SEK";
+  if (value === null) return "0,00 SEK";
 
-  const amount = typeof value === "number" ? value : Number(value.toString());
-  return new Intl.NumberFormat("sv-SE", {
-    style: "currency",
-    currency: "SEK",
-  }).format(amount);
+  const amountInCents = typeof value === "number" ? value : Number(value.toString());
+  const amount = amountInCents / 100;
+
+  return (
+    amount.toLocaleString("sv-SE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + " SEK"
+  );
 }
 
 function escapeHtml(value: string): string {
@@ -178,4 +182,91 @@ export async function sendCheckoutOrderReceivedEmail(
   });
 
   return result;
+}
+
+/**
+ * Sends an email to the customer notifying them that their order has been approved.
+ */
+export async function sendOrderApprovedEmail(
+  orderId: string,
+  adminName: string
+): Promise<void> {
+  const order = await getCheckoutOrderMailPayload(orderId);
+
+  if (!order) {
+    console.error(`[MAIL_SERVICE] Cannot send approval email: Order ${orderId} not found`);
+    return;
+  }
+
+  await sendEmail({
+    to: order.user.email,
+    subject: `Order Approved by ${adminName}`,
+    text: `This order was approved by ${adminName}`,
+    html: `
+      <p>Hi ${escapeHtml(order.user.name)},</p>
+      <p>Greetings! Your order has been approved by <strong>${escapeHtml(adminName)}</strong>.</p>
+      <p>Thank you for shopping with usWe will contact you shortly with the final steps.</p>
+      <p>Rajput Foods Sweden</p>
+    `,
+    throwOnFailure: true,
+  });
+}
+
+/**
+ * Sends an email to the customer when their order status is updated.
+ */
+export async function sendOrderStatusUpdateEmail(
+  orderId: string,
+  newStatus: string,
+  notes?: string
+): Promise<void> {
+  const order = await getCheckoutOrderMailPayload(orderId);
+
+  if (!order) {
+    console.error(`[MAIL_SERVICE] Cannot send status update email: Order ${orderId} not found`);
+    return;
+  }
+
+  const orderNumber = order.id.slice(-6).toUpperCase();
+  let statusDisplay = newStatus.replace(/_/g, " ");
+  let subject = `Order #${orderNumber} status update`;
+  let title = "Order Status Update";
+  let content = `The status of your order <strong>#${orderNumber}</strong> has been updated to <strong>${statusDisplay}</strong>.`;
+
+  // Customize based on status
+  if (newStatus === "CANCELLED") {
+    subject = `Order #${orderNumber} has been cancelled`;
+    title = "Order Cancelled";
+    content = `Your order <strong>#${orderNumber}</strong> has been cancelled by the administrator.`;
+  } else if (newStatus === "AWAITING_PAYMENT") {
+    subject = `Payment request for Order #${orderNumber}`;
+    title = "Awaiting Payment";
+    content = `Your order <strong>#${orderNumber}</strong> has been reviewed and is now awaiting payment. You will receive payment instructions shortly.`;
+  } else if (newStatus === "SHIPPED") {
+    subject = `Order #${orderNumber} is on its way!`;
+    title = "Order Shipped";
+    content = `Great news! Your order <strong>#${orderNumber}</strong> has been shipped and is heading to your delivery address.`;
+  } else if (newStatus === "DELIVERED") {
+    subject = `Order #${orderNumber} delivered`;
+    title = "Order Delivered";
+    content = `Your order <strong>#${orderNumber}</strong> has been marked as delivered. We hope you enjoy your purchase!`;
+  }
+
+  await sendEmail({
+    to: order.user.email,
+    subject,
+    text: `${title}\n\n${content.replace(/<[^>]*>/g, "")}\n\n${notes ? `Notes: ${notes}\n\n` : ""}Rajput Foods Sweden`,
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+        <h2 style="color: #d4af37;">${title}</h2>
+        <p>Hi ${escapeHtml(order.user.name)},</p>
+        <p>${content}</p>
+        ${notes ? `<div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #d4af37;"><strong>Admin Notes:</strong><br/>${escapeHtml(notes)}</div>` : ""}
+        <p>You can view your order details in your account dashboard.</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #777;">Rajput Foods Sweden</p>
+      </div>
+    `,
+    throwOnFailure: true,
+  });
 }

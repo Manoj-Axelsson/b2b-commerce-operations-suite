@@ -1,6 +1,6 @@
-import "server-only";
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import "server-only";
 
 const DEFAULT_EMAIL_TIMEOUT_MS = 8_000;
 
