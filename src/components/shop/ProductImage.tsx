@@ -35,7 +35,7 @@ export const ProductImage = ({ imageUrl, name, priority }: ProductImageProps) =>
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             className={`object-contain transition-transform duration-700 group-hover:scale-110 ${!isFallback ? "p-6" : ""}`}
             priority={priority}
-            loading={priority ? "eager" : undefined}
+            loading={priority || isFallback ? "eager" : undefined}
             onError={() => setHasError(true)}
         />
     );

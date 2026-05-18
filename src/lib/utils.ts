@@ -10,6 +10,13 @@ export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "rajputfoods@gmail.com";
  * Standardized check to determine if a user has administrative privileges.
  * A user is an admin if their email matches ADMIN_EMAIL or their role is "admin".
  */
+
+// Known product image filenames present in the public folder.
+const AVAILABLE_PRODUCT_IMAGES = new Set<string>([
+  "Elephant Atta Medium 10kg.jpg",
+  "HeavensHarvest_BasmatiRice_5kg.webp",
+  "Virgin_Pink_Salt.png",
+]);
 export function checkIsAdmin(user?: { email?: string | null; role?: string | null } | null): boolean {
     if (!user) return false;
     return user.email === ADMIN_EMAIL || user.role === "admin";
@@ -49,6 +56,7 @@ export function sortProductsImagesFirst<T extends { imageUrl?: string | null; na
 // 1. External URLs (http/https) are left as-is.
 // 2. Local paths are prefixed with /images/products/ if they don't already have it.
 // 3. Leading slashes are ensured for all local paths.
+
 export function normalizeProductImagePath(path: string | null | undefined): string | null {
     if (!path) return null;
     const trimmed = path.trim();
@@ -59,17 +67,22 @@ export function normalizeProductImagePath(path: string | null | undefined): stri
         return trimmed;
     }
 
+    // Extract filename to verify existence
+    const filename = trimmed.split("/").pop();
+    if (filename && !AVAILABLE_PRODUCT_IMAGES.has(decodeURIComponent(filename))) {
+        // Unknown or missing image – fallback to placeholder
+        return null;
+    }
+
     // Standardize local path prefix
     const standardPrefix = "/images/products/";
 
-    // Check if it already has the standard prefix (with or without leading slash)
+    // Ensure the path uses the standard prefix
     if (trimmed.startsWith(standardPrefix) || trimmed.startsWith("images/products/")) {
         return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
     }
 
-    // It's a raw filename or a non-standard path — move it to the products folder.
-    // Strip any leading slash first to avoid double slashes.
+    // For any other case (raw filename), prepend the standard prefix
     const cleanPath = trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
     return `${standardPrefix}${cleanPath}`;
 }
-
