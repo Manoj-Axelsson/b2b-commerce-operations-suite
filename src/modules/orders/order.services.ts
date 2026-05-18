@@ -92,16 +92,16 @@ export async function updateOrderStatus({
     const { after } = await import("next/server");
     after(async () => {
       try {
-        const { mailService } = await import("@/modules/checkout/mail.service");
-        await mailService.sendOrderStatusUpdate(orderId, nextStatus, notes);
+        const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
+        await sendOrderStatusUpdateEmail(orderId, nextStatus, notes);
       } catch (error) {
         console.error(`[ORDER_EMAIL_HOOK]: Failed to notify customer of status change to ${nextStatus}`, error);
       }
     });
   } catch (_e) {
     // If 'after' is not available (e.g. background task), send synchronously
-    const { mailService } = await import("@/modules/checkout/mail.service");
-    await mailService.sendOrderStatusUpdate(orderId, nextStatus, notes).catch(err => {
+    const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
+    await sendOrderStatusUpdateEmail(orderId, nextStatus, notes).catch((err: unknown) => {
       console.error("[ORDER_EMAIL_SYNC]: Failed to send notification", err);
     });
   }
