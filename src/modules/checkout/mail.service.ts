@@ -12,7 +12,7 @@ const sendCheckoutOrderMailSchema = z.object({
   orderId: z.string().uuid("Invalid order ID"),
 });
 
-async function getCheckoutOrderMailPayload(orderId: string) {
+export async function getCheckoutOrderMailPayload(orderId: string) {
   return prisma.order.findUnique({
     where: { id: orderId },
     include: {
@@ -29,7 +29,7 @@ async function getCheckoutOrderMailPayload(orderId: string) {
   });
 }
 
-type CheckoutOrderMailPayload = NonNullable<Awaited<ReturnType<typeof getCheckoutOrderMailPayload>>>;
+export type CheckoutOrderMailPayload = NonNullable<Awaited<ReturnType<typeof getCheckoutOrderMailPayload>>>;
 
 function formatCurrency(value: { toString(): string } | number | null): string {
   if (value === null) return "0,00 SEK";
@@ -45,7 +45,7 @@ function formatCurrency(value: { toString(): string } | number | null): string {
   );
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -213,27 +213,20 @@ export async function sendOrderApprovedEmail(
 }
 
 /**
- * Sends an email to the customer when their order status is updated.
+ * Pure builder for order status update email content.
+ * Exported so the notification renderer can reuse it.
  */
-export async function sendOrderStatusUpdateEmail(
-  orderId: string,
+export function buildOrderStatusUpdateEmail(
+  order: CheckoutOrderMailPayload,
   newStatus: string,
-  notes?: string
-): Promise<void> {
-  const order = await getCheckoutOrderMailPayload(orderId);
-
-  if (!order) {
-    console.error(`[MAIL_SERVICE] Cannot send status update email: Order ${orderId} not found`);
-    return;
-  }
-
+  notes?: string,
+): { subject: string; html: string; text: string } {
   const orderNumber = order.id.slice(-6).toUpperCase();
   const statusDisplay = newStatus.replace(/_/g, " ");
   let subject = `Order #${orderNumber} status update`;
   let title = "Order Status Update";
   let content = `The status of your order <strong>#${orderNumber}</strong> has been updated to <strong>${statusDisplay}</strong>.`;
 
-  // Customize based on status
   if (newStatus === "CANCELLED") {
     subject = `Order #${orderNumber} has been cancelled`;
     title = "Order Cancelled";
@@ -252,11 +245,7 @@ export async function sendOrderStatusUpdateEmail(
     content = `Your order <strong>#${orderNumber}</strong> has been marked as delivered. We hope you enjoy your purchase!`;
   }
 
-  await sendEmail({
-    to: order.user.email,
-    subject,
-    text: `${title}\n\n${content.replace(/<[^>]*>/g, "")}\n\n${notes ? `Notes: ${notes}\n\n` : ""}Rajput Foods Sweden`,
-    html: `
+  const html = `
       <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
         <h2 style="color: #d4af37;">${title}</h2>
         <p>Hi ${escapeHtml(order.user.name)},</p>
@@ -266,7 +255,37 @@ export async function sendOrderStatusUpdateEmail(
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="font-size: 12px; color: #777;">Rajput Foods Sweden</p>
       </div>
-    `,
+    `;
+
+  const text = `${title}\n\n${content.replace(/<[^>]*>/g, "")}\n\n${notes ? `Notes: ${notes}\n\n` : ""}Rajput Foods Sweden`;
+
+  return { subject, html, text };
+}
+
+/**
+ * Sends an email to the customer when their order status is updated.
+ * @deprecated Prefer enqueueNotification({ type: "ORDER_STATUS_UPDATE", ... }).
+ *   Kept for any direct callers; the order service has been migrated.
+ */
+export async function sendOrderStatusUpdateEmail(
+  orderId: string,
+  newStatus: string,
+  notes?: string,
+): Promise<void> {
+  const order = await getCheckoutOrderMailPayload(orderId);
+
+  if (!order) {
+    console.error(`[MAIL_SERVICE] Cannot send status update email: Order ${orderId} not found`);
+    return;
+  }
+
+  const { subject, html, text } = buildOrderStatusUpdateEmail(order, newStatus, notes);
+
+  await sendEmail({
+    to: order.user.email,
+    subject,
+    html,
+    text,
     throwOnFailure: true,
   });
 }
