@@ -1,7 +1,7 @@
 import { AdjustmentType, OrderStatus, PaymentStatus } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
 import { addOrderAdjustment } from "./order.adjustment";
-import { updateOrderStatus } from "./order.services";
+import updateOrderStatus from "./order.services";
 import { runManagedTransaction } from "@/lib/managedTransaction";
 
 /**
