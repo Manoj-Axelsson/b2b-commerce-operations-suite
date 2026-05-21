@@ -241,7 +241,7 @@ model Order {
   // ------------------------------------------------------
   // SYSTEM TIMESTAMPS & SECURITY
   // ------------------------------------------------------
-  
+
   idempotencyKey String? @unique
 
   createdAt DateTime @default(now())
@@ -393,6 +393,36 @@ model Supplier {
   email     String    @unique
   createdAt DateTime  @default(now())
   products  Product[]
+}
+
+model EmailJob {
+  id      String @id @db.Uuid
+  type    String
+  payload Json
+
+  dedupeKey String? @unique
+
+  status      EmailJobStatus @default(PENDING)
+  attempts    Int            @default(0)
+  maxAttempts Int            @default(5)
+
+  nextAttemptAt DateTime  @default(now())
+  processingAt  DateTime?
+  sentAt        DateTime?
+
+  lastError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+}
+
+enum EmailJobStatus {
+  PENDING
+  PROCESSING
+  SENT
+  DEAD
 }
 
 enum UserRole {
