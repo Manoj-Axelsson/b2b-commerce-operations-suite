@@ -32,6 +32,10 @@ next-env.d.ts
 .DS_Store
 *.pem
 
+# IDE / Editor files
+.idea/
+.vscode/
+
 # Local scratch and planning files (developer notes — not part of the codebase)
 singleton_implementation_plan.md
 docs/arch/

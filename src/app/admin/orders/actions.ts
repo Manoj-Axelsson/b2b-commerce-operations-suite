@@ -3,89 +3,84 @@
 import { revalidatePath } from "next/cache";
 import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
 import { updateOrderStatus as updateOrderService } from "@/modules/orders/order.services";
+import {
+  addOrderAdjustment,
+  removeOrderAdjustment,
+} from "@/modules/orders/order.adjustment";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ADMIN_EMAIL } from "@/lib/utils";
-import { formatSafeError, BusinessError } from "@/lib/error";
+import { checkIsAdmin } from "@/lib/utils";
 
-export async function updateOrderStatus(formData: FormData): Promise<void> {
+/**
+ * Utility to verify admin session and return user ID.
+ */
+async function verifyAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
+  const isAdmin = checkIsAdmin(session?.user);
 
-  if (!session || !isAdmin) {
-    throw new Error("Unauthorized: Admin access required");
+  if (!session?.user || !isAdmin) {
+    throw new Error("Unauthorized. Admin access required.");
   }
 
-  const orderId = formData.get("orderId") as string;
-  const status = formData.get("status") as OrderStatus;
-
-  if (!orderId || !status) {
-    throw new BusinessError("Missing orderId or status", 400);
-  }
-
-  try {
-    await updateOrderService({
-      orderId,
-      nextStatus: status,
-      actorId: session.user.id,
-      actorRole: "ADMIN",
-      notes: `Manual status update via Admin Dashboard to ${status}`,
-    });
-
-    revalidatePath("/admin/orders");
-  } catch (error) {
-    formatSafeError(error);
-  }
+  return session.user.id;
 }
 
-export async function addAdjustmentAction(formData: FormData): Promise<void> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
+/**
+ * Server action: update order status from the admin dashboard form.
+ */
+export async function updateOrderStatus(formData: FormData): Promise<void> {
+  const actorId = await verifyAdmin();
 
-  if (!session || !isAdmin) {
-    throw new Error("Unauthorized");
-  }
+  const orderId = formData.get("orderId") as string;
+  const nextStatus = formData.get("status") as OrderStatus;
+
+  await updateOrderService({
+    orderId,
+    nextStatus,
+    actorId,
+    actorRole: "ADMIN",
+    notes: `Manual status update via Admin Dashboard to ${nextStatus}`,
+  });
+
+  revalidatePath("/admin/orders");
+}
+
+/**
+ * Server action: add a financial adjustment (discount / fee) to an order.
+ */
+export async function addAdjustmentAction(formData: FormData): Promise<void> {
+  const actorId = await verifyAdmin();
 
   const orderId = formData.get("orderId") as string;
   const type = formData.get("type") as AdjustmentType;
   const amount = parseFloat(formData.get("amount") as string);
-  const description = formData.get("description") as string;
+  const descriptionRaw = formData.get("description");
+  const description =
+    typeof descriptionRaw === "string" && descriptionRaw.length > 0
+      ? descriptionRaw
+      : undefined;
 
-  if (!orderId || !type || isNaN(amount)) {
-    throw new BusinessError("Invalid adjustment data", 400);
-  }
+  await addOrderAdjustment({
+    orderId,
+    type,
+    amount,
+    description,
+    actorId,
+  });
 
-  try {
-    await import("@/modules/orders/order.adjustment").then(m => 
-      m.addOrderAdjustment({
-        orderId,
-        type,
-        amount,
-        description,
-        actorId: session.user.id
-      })
-    );
-    revalidatePath("/admin/orders");
-  } catch (error) {
-    formatSafeError(error);
-  }
+  revalidatePath("/admin/orders");
 }
 
+/**
+ * Server action: remove an adjustment and revert the totals.
+ */
 export async function removeAdjustmentAction(formData: FormData): Promise<void> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
-
-  if (!session || !isAdmin) throw new Error("Unauthorized");
+  const actorId = await verifyAdmin();
 
   const orderId = formData.get("orderId") as string;
   const adjustmentId = formData.get("adjustmentId") as string;
 
-  try {
-    await import("@/modules/orders/order.adjustment").then(m => 
-      m.removeOrderAdjustment(orderId, adjustmentId, session.user.id)
-    );
-    revalidatePath("/admin/orders");
-  } catch (error) {
-    formatSafeError(error);
-  }
+  await removeOrderAdjustment(orderId, adjustmentId, actorId);
+
+  revalidatePath("/admin/orders");
 }

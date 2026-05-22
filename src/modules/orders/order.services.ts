@@ -5,115 +5,137 @@ import { ORDER_TRANSITIONS } from "./order.machine";
 import { orderRepository } from "./order.repository";
 import { OrderWithHistory, UpdateStatusParams } from "./order.types";
 import { updateStatusSchema } from "./order.validators";
+import { enqueueNotification } from "@/modules/notifications/notification.service";
 
 /**
  * Service to orchestrate order status updates.
- * Validates against Zod schema and Machine workflow before persisting via Repository.
+ * Ensures validation, workflow compliance, transactional safety,
+ * audit logging, and reliable notification dispatch via outbox.
  */
 export async function updateOrderStatus({
-  orderId,
-  nextStatus,
-  actorId,
-  actorRole,
-  notes,
-  signal,
-  tx,
-}: UpdateStatusParams) {
-  // 1. Validation Wrap (Input Safety)
+                                   orderId,
+                                   nextStatus,
+                                   actorId,
+                                   actorRole,
+                                   notes,
+                                   signal,
+                                   tx,
+                                 }: UpdateStatusParams) {
+  // 1. Validation
   const validated = updateStatusSchema.parse({ orderId, nextStatus, notes });
 
-  // 2. Logic implementation (DRY)
+  // 2. Core execution inside transaction
   const execute = async (currentTx: Prisma.TransactionClient) => {
-    // Data Fetch (Current State)
+    // Fetch current state
     const order = await orderRepository.findById(validated.orderId, currentTx);
-    if (!order) throw new BusinessError(`Order ${validated.orderId} not found`, 404);
+    if (!order) {
+      throw new BusinessError(`Order ${validated.orderId} not found`, 404);
+    }
 
-    // Idempotency: If already in this status, return success
+    // Idempotency
     if (order.status === validated.nextStatus) {
-      console.log(`[IDEMPOTENCY]: Order ${validated.orderId} is already ${validated.nextStatus}. Skipping.`);
+      console.log(
+          `[IDEMPOTENCY]: Order ${validated.orderId} already ${validated.nextStatus}. Skipping.`
+      );
       return order;
     }
 
-    // Workflow Rules Check (Machine)
+    // Validate transition
     const allowedTransitions = ORDER_TRANSITIONS[order.status];
     if (!allowedTransitions.includes(validated.nextStatus)) {
       throw new BusinessError(
-        `Illegal transition: Cannot move from ${order.status} to ${validated.nextStatus}`,
-        422
+          `Illegal transition: ${order.status} → ${validated.nextStatus}`,
+          422
       );
     }
 
-    // Data Preparation
-    const updateData: Prisma.OrderUpdateInput = { status: validated.nextStatus };
+    // Prepare update data
+    const updateData: Prisma.OrderUpdateInput = {
+      status: validated.nextStatus,
+    };
 
     if (validated.nextStatus === OrderStatus.AWAITING_PAYMENT) {
       updateData.reviewedAt = new Date();
     }
 
     if (validated.nextStatus === OrderStatus.CONFIRMED) {
-      // HIGH SECURITY: Verify payment received signal
-      const currentOrder = await currentTx.order.findUnique({ where: { id: validated.orderId } });
+      const currentOrder = await currentTx.order.findUnique({
+        where: { id: validated.orderId },
+      });
+
       if (currentOrder?.paymentStatus !== "RECEIVED") {
-        throw new BusinessError("Security Violation: Cannot confirm order without verified payment receipt.", 403);
+        throw new BusinessError(
+            "Cannot confirm order without verified payment receipt.",
+            403
+        );
       }
+
       updateData.paymentReceivedAt = new Date();
     }
 
-    if (validated.nextStatus === OrderStatus.SHIPPED) updateData.shippedAt = new Date();
-    if (validated.nextStatus === OrderStatus.DELIVERED) updateData.deliveredAt = new Date();
+    if (validated.nextStatus === OrderStatus.SHIPPED) {
+      updateData.shippedAt = new Date();
+    }
 
-    // DB Persistence
-    const updatedOrder = await orderRepository.update(validated.orderId, updateData, currentTx);
+    if (validated.nextStatus === OrderStatus.DELIVERED) {
+      updateData.deliveredAt = new Date();
+    }
 
-    // Audit Logging
-    await orderRepository.createEvent({
-      orderId: validated.orderId,
-      previousStatus: order.status,
-      nextStatus: validated.nextStatus,
-      actorId,
-      actorRole,
-      notes: validated.notes ?? `Status changed from ${order.status} to ${validated.nextStatus}`,
-    }, currentTx);
+    // Persist update
+    const updatedOrder = await orderRepository.update(
+        validated.orderId,
+        updateData,
+        currentTx
+    );
+
+    // Audit trail
+    await orderRepository.createEvent(
+        {
+          orderId: validated.orderId,
+          previousStatus: order.status,
+          nextStatus: validated.nextStatus,
+          actorId,
+          actorRole,
+          notes:
+              validated.notes ??
+              `Status changed from ${order.status} to ${validated.nextStatus}`,
+        },
+        currentTx
+    );
+
+    // ✅ OUTBOX: enqueue notification INSIDE transaction
+    await enqueueNotification(
+        {
+          type: "ORDER_STATUS_UPDATE",
+          payload: {
+              orderId: validated.orderId,
+              nextStatus: validated.nextStatus,
+              notes: validated.notes,
+              previousStatus: order.status
+          },
+          dedupeKey: `order:${validated.orderId}:status:${validated.nextStatus}`,
+        },
+        currentTx
+    );
 
     return updatedOrder;
   };
 
-  // 3. Execution Strategy: Join existing OR start new managed transaction
-  let result: Awaited<ReturnType<typeof execute>>;
+  // 3. Execute transaction
   if (tx) {
-    result = await execute(tx);
-  } else {
-    result = await runManagedTransaction(signal, execute);
+    return execute(tx);
   }
 
-  // 4. Post-Transaction Hooks: Send Customer Notification
-  // We use Next.js 'after' to send the email without blocking the response
-  try {
-    const { after } = await import("next/server");
-    after(async () => {
-      try {
-        const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
-        await sendOrderStatusUpdateEmail(orderId, nextStatus, notes);
-      } catch (error) {
-        console.error(`[ORDER_EMAIL_HOOK]: Failed to notify customer of status change to ${nextStatus}`, error);
-      }
-    });
-  } catch {
-    // If 'after' is not available (e.g. background task/older version), send synchronously but safely
-    try {
-      const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
-      await sendOrderStatusUpdateEmail(orderId, nextStatus, notes);
-    } catch (syncErr) {
-      console.error("[ORDER_EMAIL_SYNC]: Failed to send notification", syncErr);
-    }
-  }
-
-  return result;
+  return runManagedTransaction(signal, execute);
 }
+
+export default updateOrderStatus;
 
 /**
  * Service to retrieve full order history.
  */
-export async function getOrderWithHistory(orderId: string): Promise<OrderWithHistory | null> {
+export async function getOrderWithHistory(
+    orderId: string
+): Promise<OrderWithHistory | null> {
   return orderRepository.findWithHistory(orderId) as Promise<OrderWithHistory | null>;
 }
