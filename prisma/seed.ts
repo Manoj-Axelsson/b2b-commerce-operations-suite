@@ -1,11 +1,12 @@
-import { PrismaClient } from '../src/generated/prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse/sync';
+import pg from "pg";
 
-const { Pool } = require('pg');
+const { Pool } = pg;
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -20,7 +21,7 @@ const prisma = new PrismaClient({ adapter });
 /**
  * Seeding strategy:
  * - CSV-based ingestion
- * - Deterministic upsert per product (articleNo as unique key)
+ * - Deterministic upsert per product (articleNo as a unique key)
  * - Sequential execution by design
  *
  * Constraint:
@@ -79,6 +80,47 @@ function toDate(value: string, articleNo: string): Date {
     return date;
 }
 
+async function seedPromotions() {
+    console.log('--- Seeding promotions ---');
+
+    const products = await prisma.product.findMany({
+        take: 5, // keep small for now
+    });
+
+    if (products.length === 0) {
+        console.warn('No products found. Skipping promotions.');
+        return;
+    }
+
+    // Since 'code' is not marked as @unique in schema.prisma, 
+    // we check manually to avoid upsert constraints issues.
+    const existingPromotion = await prisma.promotion.findFirst({
+        where: { code: 'TEST20' }
+    });
+
+    if (existingPromotion) {
+        console.log(`Promotion ${existingPromotion.code} already exists.`);
+        return;
+    }
+
+    const promotion = await prisma.promotion.create({
+        data: {
+            code: 'TEST20',
+            discountUnit: 'PERCENTAGE',
+            discountValue: 20,
+            isActive: true,
+            startDate: new Date(Date.now() - 86400000),
+            endDate: new Date(Date.now() + 86400000 * 7),
+
+            products: {
+                connect: products.map(p => ({ id: p.id })),
+            },
+        },
+    });
+
+    console.log(`Promotion created: ${promotion.code}`);
+}
+
 async function main() {
     const csvFilePath = path.join(
         process.cwd(),
@@ -100,7 +142,7 @@ async function main() {
         );
     }
 
-    console.log(`--- Startar seeding av ${records.length} produkter ---`);
+    console.log(`--- Starting seeding of ${records.length} products ---`);
 
     let index = 0;
 
@@ -140,7 +182,9 @@ async function main() {
         });
     }
 
-    console.log('--- Seeding slutförd! ---');
+    await seedPromotions();
+
+    console.log('--- Seeding successful! ---');
 }
 
 main()
