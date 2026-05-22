@@ -34,4 +34,4 @@ next-env.d.ts
 
 # Local scratch and planning files (developer notes — not part of the codebase)
 singleton_implementation_plan.md
-/docs/arch/
+docs/arch/

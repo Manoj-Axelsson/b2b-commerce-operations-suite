@@ -87,9 +87,9 @@ model Category {
 }
 
 model Product {
-  id              String          @id @default(uuid())
-  articleNo       String          @unique
-  barcode         String?         @unique
+  id              String        @id @default(uuid())
+  articleNo       String        @unique
+  barcode         String?       @unique
   name            String
   brand           String
   weightValue     Int
@@ -103,22 +103,26 @@ model Product {
   discountStart   DateTime?
   discountEnd     DateTime?
   discountType    DiscountType?
-  quantity        Int             @default(0)
-  minQuantity     Int             @default(5)
+  quantity        Int           @default(0)
+  minQuantity     Int           @default(5)
   expiryDate      DateTime?
   lastRestockedAt DateTime?
-  isActive        Boolean         @default(true)
-  isDeleted       Boolean         @default(false)
+  isActive        Boolean       @default(true)
+  isDeleted       Boolean       @default(false)
   categoryId      String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   supplierId      String?
-  cartItems       CartItem[]
-  orderItems      OrderItem[]
-  category        Category        @relation(fields: [categoryId], references: [id])
-  supplier        Supplier?       @relation(fields: [supplierId], references: [id])
-  stockMovements  StockMovement[]
-  wishlistedBy    Wishlist[]
+
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  category       Category        @relation(fields: [categoryId], references: [id])
+  supplier       Supplier?       @relation(fields: [supplierId], references: [id])
+  stockMovements StockMovement[]
+  wishlistedBy   Wishlist[]
+
+  //FIXED: Many-to-many
+  promotions Promotion[] @relation("ProductPromotions")
 
   @@index([categoryId])
   @@index([brand])
@@ -173,6 +177,23 @@ model Wishlist {
   @@unique([userId, productId])
   @@index([userId])
   @@map("wishlist")
+}
+
+model Promotion {
+  id            String  @id @default(uuid())
+  code          String
+  discountUnit  String
+  discountValue Decimal @db.Decimal(10, 2)
+
+  isActive  Boolean  @default(true)
+  startDate DateTime
+  endDate   DateTime
+
+  // ✅ Matching relation
+  products Product[] @relation("ProductPromotions")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Order {
@@ -241,7 +262,7 @@ model Order {
   // ------------------------------------------------------
   // SYSTEM TIMESTAMPS & SECURITY
   // ------------------------------------------------------
-  
+
   idempotencyKey String? @unique
 
   createdAt DateTime @default(now())
@@ -265,33 +286,20 @@ model OrderItem {
   orderId   String
   productId String
 
+  productName String
+  sku         String?
+
   quantity Int
 
-  // ------------------------------------------------------
-  // SNAPSHOT DATA
-  // ------------------------------------------------------
+  price     Int // ← IMPORTANT: match your system (cents)
+  lineTotal Int
 
-  productName String
+  // NEW FIELDS (your promotions)
+  discountApplied      Int     @default(0)
+  appliedPromotionCode String?
 
-  sku String?
-
-  price Decimal @db.Decimal(10, 2)
-
-  vatRate Decimal? @db.Decimal(5, 2)
-
-  lineTotal Decimal? @db.Decimal(10, 2)
-
-  // ------------------------------------------------------
-  // RELATIONS
-  // ------------------------------------------------------
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
-
-  // ------------------------------------------------------
-  // SYSTEM
-  // ------------------------------------------------------
 
   createdAt DateTime @default(now())
 

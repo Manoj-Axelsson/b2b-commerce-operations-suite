@@ -98,12 +98,14 @@ export async function updateOrderStatus({
         console.error(`[ORDER_EMAIL_HOOK]: Failed to notify customer of status change to ${nextStatus}`, error);
       }
     });
-  } catch (_e) {
-    // If 'after' is not available (e.g. background task), send synchronously
-    const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
-    await sendOrderStatusUpdateEmail(orderId, nextStatus, notes).catch((err: unknown) => {
-      console.error("[ORDER_EMAIL_SYNC]: Failed to send notification", err);
-    });
+  } catch {
+    // If 'after' is not available (e.g. background task/older version), send synchronously but safely
+    try {
+      const { sendOrderStatusUpdateEmail } = await import("@/modules/checkout/mail.service");
+      await sendOrderStatusUpdateEmail(orderId, nextStatus, notes);
+    } catch (syncErr) {
+      console.error("[ORDER_EMAIL_SYNC]: Failed to send notification", syncErr);
+    }
   }
 
   return result;
