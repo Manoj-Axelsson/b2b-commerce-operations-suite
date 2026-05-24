@@ -2,7 +2,7 @@
 import { z } from "zod";
 
 export const cartItemInputSchema = z.object({
-    productId: z.string().uuid("Product ID must be a valid UUID"),
+    productId: z.string().uuid({ message: "Product ID must be a valid UUID" }),
     productName: z.string().min(1),
     quantity: z.number().int().positive(),
     price: z.number().int().nonnegative(), // cents
