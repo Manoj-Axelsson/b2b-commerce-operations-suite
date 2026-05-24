@@ -6,6 +6,7 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { Product } from "@/types/shop";
 import { sortProductsImagesFirst, checkIsAdmin } from "@/lib/utils";
+import { PromotionBanners } from "@/components/shop/PromotionBanners";
 
 export const dynamic = "force-dynamic";
 
@@ -130,8 +131,8 @@ const ShopPage = async ({ searchParams }: ShopPageProps) => {
     const gridHeading = categoryName ?? "Our Shop";
 
     return (
-        <main className="min-h-screen bg-brand-cream py-8 px-4 sm:py-12 md:py-20 sm:px-6 md:px-8">
-            <div className="max-w-7xl mx-auto">
+        <main className="min-h-screen bg-brand-cream py-8 px-4 sm:py-12 md:py-20 sm:px-6 md:px-8 relative">
+            <div className="max-w-5xl mx-auto relative z-10">
 
                 {/* ShopFilters is a client component that uses useSearchParams —
                     wrap in Suspense to satisfy the Next.js streaming requirement */}
@@ -142,6 +143,15 @@ const ShopPage = async ({ searchParams }: ShopPageProps) => {
                         categoryName={categoryName}
                     />
                 </Suspense>
+
+                {/* FEATURED BANNERS */}
+                {!category && !name && (
+                    <PromotionBanners 
+                        promotions={mapped.filter(p => p.discountPrice !== null).slice(0, 2)}
+                        launches={mapped.slice(0, 3)} // Show newest as launches
+                        isApproved={isApproved}
+                    />
+                )}
 
                 <ProductGrid
                     products={products}

@@ -22,15 +22,7 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                 !isInStock && "opacity-90 grayscale-[0.3]",
             )}
         >
-            {/* Promotion badge — only shown to approved users since it references pricing */}
-            {isDiscounted && isApproved && (
-                <div className={cn(
-                    "absolute top-3 left-3 z-10 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md sm:top-4 sm:left-4",
-                    product.discountType === "CLEARANCE" ? "bg-red-700" : "bg-brand-gold-dark"
-                )}>
-                    {product.discountType?.replace("_", " ") || "Promotion"}
-                </div>
-            )}
+
 
             <WishlistButton productId={product.id} />
 
@@ -69,9 +61,19 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                         {product.name}
                     </h3>
 
-                    <p className="text-muted-foreground text-xs italic">
-                        {product.weightValue}{product.weightUnit}
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <p className="text-muted-foreground text-xs italic">
+                            {product.weightValue}{product.weightUnit}
+                        </p>
+                        {isDiscounted && isApproved && (
+                            <span className={cn(
+                                "text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm",
+                                product.discountType === "CLEARANCE" ? "bg-red-700" : "bg-brand-gold-dark"
+                            )}>
+                                {product.discountType?.replace("_", " ") || "Promotion"}
+                            </span>
+                        )}
+                    </div>
 
                     <div className="mt-auto pt-2 border-t border-brand-border/40 min-h-8">
                         {isApproved ? (

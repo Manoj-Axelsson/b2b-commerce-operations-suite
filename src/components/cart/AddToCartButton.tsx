@@ -43,13 +43,13 @@ export const AddToCartButton = ({ product, className }: AddToCartButtonProps) =>
             disabled={isDisabled}
             aria-label={`${getLabel()} — ${product.name}`}
             className={cn(
-                "flex items-center justify-center gap-2 rounded-full px-6 py-3",
-                "font-bold text-sm uppercase tracking-widest transition-all duration-300",
+                "flex items-center justify-center gap-2 rounded-full px-5 py-2",
+                "font-bold text-[11px] uppercase tracking-widest transition-all duration-300",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold-dark",
                 isDisabled
                     ? "bg-brand-border text-muted-foreground cursor-not-allowed"
-                    : "bg-brand-primary text-white hover:bg-brand-gold-dark active:scale-95 shadow-md hover:shadow-lg",
-                isAdding && "bg-green-600 text-white",
+                    : "text-white bg-linear-to-r from-brand-gold-dark via-brand-gold to-brand-gold-dark hover:brightness-110 hover:scale-105 active:scale-95 shadow-lg border-none",
+                isAdding && "bg-green-600 text-white brightness-100 scale-100",
                 className,
             )}
         >
@@ -59,7 +59,7 @@ export const AddToCartButton = ({ product, className }: AddToCartButtonProps) =>
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-4 h-4 shrink-0"
+                className="w-3.5 h-3.5 shrink-0"
                 aria-hidden="true"
             >
                 <path
