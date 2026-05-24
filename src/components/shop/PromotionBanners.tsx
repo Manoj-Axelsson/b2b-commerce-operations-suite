@@ -1,5 +1,5 @@
 import { Product } from "@/types/shop";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { ProductImage } from "./ProductImage";
 
