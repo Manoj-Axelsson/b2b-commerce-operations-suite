@@ -44,12 +44,9 @@ const parseFormDate = (value: FormDataEntryValue | null): Date | null => {
 };
 
 /**
- * createProduct
- * Validates and persists a new product. Redirects to /admin/products on success.
+ * Common logic to parse and validate product data from FormData.
  */
-export async function createProduct(formData: FormData) {
-  await verifyAdmin();
-
+const parseAndValidateProductData = (formData: FormData) => {
   const rawData = {
     name: formData.get("name") as string,
     brand: formData.get("brand") as string,
@@ -72,16 +69,25 @@ export async function createProduct(formData: FormData) {
   const validation = AdminProductUpdateSchema.safeParse(rawData);
   if (!validation.success) {
     const errorMsg = validation.error.issues
-      .map((e) => `${e.path.join(".")}: ${e.message}`)
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(" | ");
     throw new Error(`Validation Error: ${errorMsg}`);
   }
 
-  const d = validation.data;
+  return validation.data;
+};
+
+/**
+ * createProduct
+ * Validates and persists a new product. Redirects to /admin/products on success.
+ */
+export async function createProduct(formData: FormData) {
+  await verifyAdmin();
+
+  const d = parseAndValidateProductData(formData);
 
   // Derive images[] from imageUrl so the detail-page gallery (which reads images[])
   // always stays in sync with the grid card (which reads imageUrl).
-  // imageUrl remains the single source of truth — no manual double-entry needed.
   const derivedImages = d.imageUrl ? [d.imageUrl] : [];
 
   try {
@@ -129,34 +135,7 @@ export async function updateProduct(formData: FormData) {
   const id = formData.get("id") as string;
   if (!id) throw new Error("Product ID is required.");
 
-  const rawData = {
-    name: formData.get("name") as string,
-    brand: formData.get("brand") as string,
-    articleNo: formData.get("articleNo") as string,
-    description: (formData.get("description") as string) || null,
-    imageUrl: normalizeProductImagePath(formData.get("imageUrl") as string),
-    price: parseFormInt(formData.get("price")) ?? 0,
-    weightValue: parseFormInt(formData.get("weightValue")) ?? 0,
-    weightUnit: formData.get("weightUnit") as string,
-    quantity: parseFormInt(formData.get("quantity")) ?? 0,
-    minQuantity: parseFormInt(formData.get("minQuantity")) ?? 5,
-    categoryId: formData.get("categoryId") as string,
-    discountPrice: parseFormInt(formData.get("discountPrice")),
-    discountStart: parseFormDate(formData.get("discountStart")),
-    discountEnd: parseFormDate(formData.get("discountEnd")),
-    expiryDate: parseFormDate(formData.get("expiryDate")),
-    discountType: formData.get("discountType") as string,
-  };
-
-  const validation = AdminProductUpdateSchema.safeParse(rawData);
-  if (!validation.success) {
-    const errorMsg = validation.error.issues
-      .map((e) => `${e.path.join(".")}: ${e.message}`)
-      .join(" | ");
-    throw new Error(`Validation Error: ${errorMsg}`);
-  }
-
-  const d = validation.data;
+  const d = parseAndValidateProductData(formData);
 
   // Keep images[] in sync with imageUrl (same logic as createProduct).
   const derivedImages = d.imageUrl ? [d.imageUrl] : [];

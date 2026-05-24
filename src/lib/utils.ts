@@ -11,18 +11,12 @@ export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "rajputfoods@gmail.com";
  * A user is an admin if their email matches ADMIN_EMAIL or their role is "admin".
  */
 
-// Known product image filenames present in the public folder.
-const AVAILABLE_PRODUCT_IMAGES = new Set<string>([
-  "Elephant Atta Medium 10kg.jpg",
-  "HeavensHarvest_BasmatiRice_5kg.webp",
-  "Virgin_Pink_Salt.png",
-]);
 export function checkIsAdmin(user?: { email?: string | null; role?: string | null } | null): boolean {
     if (!user) return false;
     return user.email === ADMIN_EMAIL || user.role === "admin";
 }
 
-const DEFAULT_LOCALE = "sv-SE";
+const DEFAULT_LOCALE = `sv-SE`;
 const DEFAULT_CURRENCY = "SEK";
 
 export function cn(...inputs: ClassValue[]) {
@@ -69,10 +63,7 @@ export function normalizeProductImagePath(path: string | null | undefined): stri
 
     // Extract filename to verify existence
     const filename = trimmed.split("/").pop();
-    if (filename && !AVAILABLE_PRODUCT_IMAGES.has(decodeURIComponent(filename))) {
-        // Unknown or missing image – fallback to placeholder
-        return null;
-    }
+    if (!filename) return null;
 
     // Standardize local path prefix
     const standardPrefix = "/images/products/";
