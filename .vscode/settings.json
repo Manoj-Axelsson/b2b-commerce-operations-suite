@@ -3,5 +3,10 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "typescript.tsdk": "node_modules\\typescript\\lib"
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "workbench.colorCustomizations": {
+    "terminal.background": "#ffe5a8",
+    "terminal.foreground": "#0e0e0d",
+    "terminalCursor.foreground": "#0e0e0d"
+  }
 }
