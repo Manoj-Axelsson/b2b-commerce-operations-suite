@@ -53,6 +53,7 @@ export default async function AdminCustomersPage({
           deliveryCity: true,
           deliveryPostalCode: true,
           deliveryCountry: true,
+          createdAt: true,
         },
         orderBy: { createdAt: "desc" },
       },
@@ -102,8 +103,8 @@ export default async function AdminCustomersPage({
               <label className="text-[10px] font-bold text-blue-700 uppercase">Email</label>
               <input name="email" type="email" defaultValue={editingCustomer?.email || ""} className="border p-2 rounded bg-white" required />
             </div>
-            {/* Last Address is read-only — derived from order history.
-                Only shown when editing; a brand new user has no orders yet. */}
+            {/* The last address is read-only — derived from order history.
+                Only shown when editing; a brand-new user has no orders yet. */}
             {editingCustomer && (
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-blue-700 uppercase italic">Last Address</label>
@@ -144,6 +145,7 @@ export default async function AdminCustomersPage({
             <tr>
               <th className="p-4">Customer</th>
               <th className="p-4">Addresses</th>
+              <th className="p-4">Last Order</th>
               <th className="p-4">Role</th>
               <th className="p-4">Status</th>
               <th className="p-4 text-right">Actions</th>
@@ -152,6 +154,8 @@ export default async function AdminCustomersPage({
           <tbody className="divide-y divide-gray-100">
             {customersData.map((c) => {
               const uniqueAddresses = Array.from(new Set(c.orders.map(o => formatAddr(o)).filter(Boolean)));
+              const lastOrderDate = c.orders[0]?.createdAt;
+
               return (
                 <tr key={c.id} className="hover:bg-gray-50 transition align-top">
                   <td className="p-4">
@@ -164,6 +168,16 @@ export default async function AdminCustomersPage({
                         {uniqueAddresses.map((addr, i) => <li key={i}>{addr}</li>)}
                       </ul>
                     ) : <span className="text-gray-400 italic">No history</span>}
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    {lastOrderDate ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">{lastOrderDate.toLocaleDateString()}</span>
+                        <span className="text-[10px] text-gray-400">{lastOrderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 italic">Never</span>
+                    )}
                   </td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded text-[10px] font-bold ${
@@ -195,4 +209,3 @@ export default async function AdminCustomersPage({
     </main>
   );
 }
-
