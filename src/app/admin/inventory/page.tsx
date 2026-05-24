@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 
 
-function getPromotionNotification(start: Date | null, end: Date | null): PromotionAlert {
-  if (!start || !end) return { status: "STABLE" };
+function getPromotionNotification(start: Date | null, end: Date | null): PromotionAlert | null {
+  if (!start || !end) return null;
   const now = new Date();
   const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
   const eightHoursInMs = 8 * 60 * 60 * 1000;
@@ -44,9 +44,7 @@ function getPromotionNotification(start: Date | null, end: Date | null): Promoti
     return { status: "ACTIVE" };
   }
 
-  if (now > end) return { status: "EXPIRED" };
-
-  return { status: "STABLE" };
+  return null;
 }
 
 function getStockStatus(quantity: number, minQuantity: number) {
@@ -91,7 +89,7 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
     }),
   ]);
 
-  // 2. Fetch the paginated products for the table
+  // 2. Fetch the paginated products that are needed for the table
   const [_products, pendingOrders] = await Promise.all([
     prisma.product.findMany({
       where: {
@@ -118,7 +116,7 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
   const restockNeeded = allRelevantProducts.filter((p) => p.quantity <= p.minQuantity);
   const priorityPromotions = allRelevantProducts.filter((p) => {
     const alert = getPromotionNotification(p.discountStart, p.discountEnd);
-    return alert.status === "STARTING_SOON" || alert.status === "ENDING_SOON" || alert.status === "ACTIVE";
+    return alert !== null;
   });
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -147,7 +145,7 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
               <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-ping" />
               New Order Requests ({pendingOrders.length})
             </h2>
-            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+            <div className="flex flex-col gap-2 max-h-75 overflow-y-auto">
               {pendingOrders.map((order) => (
                 <Link
                   key={order.id}
@@ -178,9 +176,10 @@ export default async function AdminInventoryPage({ searchParams }: AdminInventor
             <h2 className="text-lg font-bold text-amber-800 mb-3 flex items-center gap-2">
               Promotion Alerts ({priorityPromotions.length})
             </h2>
-            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+            <div className="flex flex-col gap-2 max-h-75 overflow-y-auto">
               {priorityPromotions.map((p) => {
                 const alert = getPromotionNotification(p.discountStart, p.discountEnd);
+                if (!alert) return null;
                 const isUrgent = alert.isUrgent;
 
                 return (

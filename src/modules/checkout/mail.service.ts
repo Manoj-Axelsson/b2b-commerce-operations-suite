@@ -9,7 +9,7 @@ import type { CheckoutOrderMailResult, SendCheckoutOrderMailInput } from "./mail
 const CHECKOUT_EMAIL_TIMEOUT_MS = 5_000;
 
 const sendCheckoutOrderMailSchema = z.object({
-  orderId: z.string().uuid("Invalid order ID"),
+  orderId: z.string().uuid({ message: "Invalid order ID" }),
 });
 
 export async function getCheckoutOrderMailPayload(orderId: string) {
