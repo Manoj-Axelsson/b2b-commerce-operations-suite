@@ -35,6 +35,7 @@ next-env.d.ts
 # IDE / Editor files
 .idea/
 .vscode/
+.junie/
 
 # Local scratch and planning files (developer notes — not part of the codebase)
 singleton_implementation_plan.md

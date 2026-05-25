@@ -1,21 +1,15 @@
-## What does this PR do?
-<!-- Brief description of the changes -->
+## User Story
+As a [role], I want [feature] so that [benefit].
+
+## Acceptance Criteria
+- [ ] AC1: [Specific, testable condition]
+
+## Edge Cases
+- [ ] EC1: [Failure mode or boundary condition]
 
 ## Related Issue
-<!-- Link to the issue: Closes #XX -->
+Closes #<issue-number>
 
-## Type of Change
-- [ ] New feature
-- [ ] Bug fix
-- [ ] Refactoring
-- [ ] Documentation
-- [ ] CI/CD
-- [ ] Other (describe)
-
-## Checklist
-- [ ] I have tested my changes locally
-- [ ] CI passes (lint + build)
-- [ ] I have followed the project naming conventions
-- [ ] I have NOT added unnecessary dependencies
-- [ ] My code follows the mobile-first approach
-- [ ] I have added comments only where logic is not self-evident
+## Testing
+- [ ] npm run lint passes
+- [ ] npm run build passes

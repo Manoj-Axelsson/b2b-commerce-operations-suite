@@ -8,6 +8,10 @@
     "start": "next start",
     "check-code": "eslint src",
     "lint": "npm run check-code",
+    "prepare": "husky",
+    "validate:branch": "node scripts/dx/validate-branch-name.cjs",
+    "validate:commit": "node scripts/dx/validate-commit-message.cjs",
+    "validate:staged": "node scripts/dx/validate-staged-files.cjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -36,6 +40,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9",
     "eslint-config-next": "^16.2.4",
+    "husky": "^9.1.7",
     "postcss": "^8.5.10",
     "prisma": "^7.7.0",
     "tailwindcss": "^4",
