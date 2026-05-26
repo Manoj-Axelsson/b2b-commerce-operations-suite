@@ -26,7 +26,7 @@ export const evaluatePromotions = (
                     baseLineTotal * (promo.discountValue / 100)
                 );
             } else {
-                appliedDiscount = promo.discountValue * item.quantity;
+                appliedDiscount = (promo.discountValue * 100) * item.quantity;
             }
 
             // Safety cap

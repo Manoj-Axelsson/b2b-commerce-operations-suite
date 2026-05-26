@@ -53,7 +53,8 @@ export async function addAdjustmentAction(formData: FormData): Promise<void> {
 
   const orderId = formData.get("orderId") as string;
   const type = formData.get("type") as AdjustmentType;
-  const amount = parseFloat(formData.get("amount") as string);
+  const amountRaw = parseFloat(formData.get("amount") as string);
+  const amount = Math.round(amountRaw * 100);
   const descriptionRaw = formData.get("description");
   const description =
     typeof descriptionRaw === "string" && descriptionRaw.length > 0

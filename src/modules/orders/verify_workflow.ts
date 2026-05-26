@@ -64,21 +64,21 @@ async function runVerification() {
       console.log(`[1] Test Order Created: ${testOrder.id} (Status: IN_PROCESS)`);
 
       // Step 2: Add a financial adjustment — verifies propagation (joins this tx).
-      console.log("[2] Adding Delivery Fee adjustment (79 SEK)...");
+      console.log("[2] Adding Delivery Fee adjustment (7900 cents = 79 SEK)...");
       await addOrderAdjustment({
         orderId: testOrder.id,
         type: AdjustmentType.DELIVERY_FEE,
-        amount: 79,
+        amount: 7900,
         description: "Express Shipping",
         actorId: existingUser.id,
         tx,
       });
 
       const afterAdjustment = await tx.order.findUnique({ where: { id: testOrder.id } });
-      console.log(`    New Total: ${afterAdjustment?.totalPrice} SEK | Adjustment Total: ${afterAdjustment?.adjustmentTotal} SEK`);
+      console.log(`    New Total: ${afterAdjustment?.totalPrice} Cents | Adjustment Total: ${afterAdjustment?.adjustmentTotal} Cents`);
 
-      if (Number(afterAdjustment?.totalPrice) !== 579) {
-        throw new Error(`ASSERTION FAILED: Expected total 579 SEK, got ${afterAdjustment?.totalPrice}`);
+      if (Number(afterAdjustment?.totalPrice) !== 8400) {
+        throw new Error(`ASSERTION FAILED: Expected total 8400 cents, got ${afterAdjustment?.totalPrice}`);
       }
       console.log("    Atomic price calculation: VERIFIED\n");
 
