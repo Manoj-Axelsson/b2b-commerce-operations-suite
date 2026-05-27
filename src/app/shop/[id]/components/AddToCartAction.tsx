@@ -92,7 +92,11 @@ const AddToCartAction = ({
                             {formatCurrency(basePrice)}
                         </span>
                     )}
+                    <span className="text-xs text-muted-foreground uppercase font-medium ml-1">exkl. moms</span>
                 </div>
+                <p className="text-[10px] text-muted-foreground/80 mt-1.5 leading-normal">
+                    Displayed prices exclude VAT. VAT added at checkout. / Priser exkl. moms. Moms tillkommer i kassan.
+                </p>
             </div>
 
             <button

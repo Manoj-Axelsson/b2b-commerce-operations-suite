@@ -12,6 +12,7 @@ This file is the standing instruction set for IDE agents working in the Rajput F
 
 - Never commit directly to `main` or `dev`.
 - All work must go through a Pull Request.
+- **Never create a branch or assign an issue number before the corresponding issue has been created.** Always couple branch creation with issue creation.
 - Use only README-approved branch formats:
   - `feature/<issue>-description`
   - `fix/<issue>-description`

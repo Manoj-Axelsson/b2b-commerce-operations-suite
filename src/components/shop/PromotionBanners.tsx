@@ -39,12 +39,18 @@ export const PromotionBanners = ({ promotions, launches, isApproved }: Promotion
                             <div className="pt-4 flex flex-col sm:flex-row items-center gap-6 justify-center md:justify-start">
                                 {isApproved && (
                                     <div className="flex flex-col">
-                                        <span className="text-2xl font-bold tracking-tighter text-brand-gold-dark">
-                                            {formatCurrency(featured.discountPrice || featured.price)}
-                                        </span>
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-2xl font-bold tracking-tighter text-brand-gold-dark font-sans">
+                                                {formatCurrency(featured.discountPrice || featured.price)}
+                                            </span>
+                                            <span className="text-[10px] text-brand-primary/60 uppercase font-medium">exkl. moms</span>
+                                        </div>
                                         <span className="text-[10px] text-brand-primary/40 line-through">
                                             Was {formatCurrency(featured.price)}
                                         </span>
+                                        <p className="text-[8px] text-brand-primary/60 leading-normal mt-1">
+                                            Displayed prices exclude VAT. VAT added at checkout.
+                                        </p>
                                     </div>
                                 )}
                                 <Link 
@@ -121,9 +127,12 @@ export const PromotionBanners = ({ promotions, launches, isApproved }: Promotion
                                 View Deal →
                             </Link>
                             {isApproved && (
-                                <span className="font-bold text-lg text-brand-gold-dark">
-                                    {formatCurrency(secondary.discountPrice || secondary.price)}
-                                </span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="font-bold text-lg text-brand-gold-dark">
+                                        {formatCurrency(secondary.discountPrice || secondary.price)}
+                                    </span>
+                                    <span className="text-[9px] text-brand-primary/60 uppercase font-medium">exkl. moms</span>
+                                </div>
                             )}
                         </div>
 
