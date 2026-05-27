@@ -86,17 +86,26 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                                     <span className="text-muted-foreground line-through text-xs ml-2">
                                         {formatCurrency(product.price)}
                                     </span>
+                                    <span className="text-[10px] text-muted-foreground ml-1.5 uppercase font-medium">exkl. moms</span>
                                 </>
                             ) : (
-                                <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
-                                    {formatCurrency(product.price)}
-                                </span>
+                                <>
+                                    <span className="text-brand-primary font-bold text-lg sm:text-xl tracking-tight">
+                                        {formatCurrency(product.price)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground ml-1.5 uppercase font-medium">exkl. moms</span>
+                                </>
                             )
                         ) : (
                             // Guests and unapproved users see a prompt instead of the price
                             <span className="text-muted-foreground text-sm italic">
                                 Log in to view price
                             </span>
+                        )}
+                        {isApproved && (
+                            <p className="text-[9px] text-muted-foreground/80 mt-1.5 leading-normal">
+                                Displayed prices exclude VAT. VAT added at checkout. / Priser exkl. moms. Moms tillkommer i kassan.
+                            </p>
                         )}
                     </div>
                 </div>
