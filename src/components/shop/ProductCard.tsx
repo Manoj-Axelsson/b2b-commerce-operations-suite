@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ProductCardProps } from "@/types/shop";
 import { formatCurrency, cn } from "@/lib/utils";
 import { ProductImage } from "./ProductImage";
-import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { WishlistButton } from "@/components/wishlist/WishlistButton";
+import { ProductCardAction } from "./ProductCardAction";
 
 export const ProductCard = ({ product, priority, isApproved }: ProductCardProps) => {
     const isInStock = product.quantity > 0;
@@ -111,23 +111,12 @@ export const ProductCard = ({ product, priority, isApproved }: ProductCardProps)
                 </div>
             </Link>
 
-            <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-                {isApproved ? (
-                    <AddToCartButton product={product} className="w-full" />
-                ) : (
-                    <Link
-                        href="/login"
-                        className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-brand-border text-brand-primary hover:bg-brand-cream border border-brand-border/60"
-                        title="Log in to order"
-                    >
-                        {!isInStock 
-                            ? "Out of stock" 
-                            : isDiscounted 
-                                ? "Offer Available" 
-                                : "In Stock"}
-                    </Link>
-                )}
-            </div>
+            <ProductCardAction 
+                product={product} 
+                isApproved={isApproved} 
+                isInStock={isInStock} 
+                isDiscounted={isDiscounted} 
+            />
         </article>
     );
 };
