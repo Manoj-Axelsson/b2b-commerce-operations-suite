@@ -114,8 +114,26 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                                 </p>
                             )}
                             {order.status === OrderStatus.CONFIRMED && (
-                                <p className="text-sm text-brand-primary">
+                                <p className="text-sm text-brand-primary font-semibold">
                                     &quot;Payment received. We are now preparing your items for shipment.&quot;
+                                </p>
+                            )}
+                            {order.status === OrderStatus.SHIPPED && (
+                                <div className="text-sm text-brand-primary space-y-2">
+                                    <p className="font-semibold">&quot;Your order has been shipped!&quot;</p>
+                                    {order.shippingMethod === "COURIER" ? (
+                                        <div className="text-xs space-y-1 text-slate-600 mt-2">
+                                            {order.trackingNumber && <p>Tracking Number: <strong className="font-mono bg-white px-2 py-0.5 rounded border">{order.trackingNumber}</strong></p>}
+                                            {order.estimatedArrivalDate && <p>Estimated Arrival: <strong>{new Date(order.estimatedArrivalDate).toLocaleDateString("sv-SE")}</strong></p>}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-600 mt-2">Your order is ready for pickup at our warehouse.</p>
+                                    )}
+                                </div>
+                            )}
+                            {order.status === OrderStatus.DELIVERED && (
+                                <p className="text-sm text-brand-primary">
+                                    &quot;Your order has been delivered. Thank you for shopping with Rajput Foods!&quot;
                                 </p>
                             )}
                         </div>

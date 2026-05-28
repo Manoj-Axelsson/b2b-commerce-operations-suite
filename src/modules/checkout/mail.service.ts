@@ -239,6 +239,20 @@ export function buildOrderStatusUpdateEmail(
     subject = `Order #${orderNumber} is on its way!`;
     title = "Order Shipped";
     content = `Great news! Your order <strong>#${orderNumber}</strong> has been shipped and is heading to your delivery address.`;
+    
+    if (order.shippingMethod === "COURIER") {
+      let trackingInfo = "";
+      if (order.trackingNumber) {
+        trackingInfo += `<li>Tracking Number: <strong>${escapeHtml(order.trackingNumber)}</strong></li>`;
+      }
+      if (order.estimatedArrivalDate) {
+        const arrivalDate = new Date(order.estimatedArrivalDate).toLocaleDateString("sv-SE");
+        trackingInfo += `<li>Estimated Arrival Date: <strong>${arrivalDate}</strong></li>`;
+      }
+      if (trackingInfo) {
+        content += `<p style="margin-top: 15px; font-weight: 500;">Shipping details:</p><ul>${trackingInfo}</ul>`;
+      }
+    }
   } else if (newStatus === "DELIVERED") {
     subject = `Order #${orderNumber} delivered`;
     title = "Order Delivered";

@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction, markOrderAsPaid } from "./actions";
+import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction } from "./actions";
 import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
 import { ORDER_TRANSITIONS } from "@/modules/orders/order.machine";
 
@@ -87,64 +87,116 @@ export default async function AdminOrdersPage() {
                     {new Date(order.createdAt).toLocaleString("sv-SE")}
                   </p>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold ${STATUS_STYLES[order.status]}`}
                   >
                     {STATUS_LABELS[order.status]}
                   </span>
-
+ 
                   {/* Status update form */}
-                  <form action={updateOrderStatus} className="flex items-center gap-2">
+                  <form action={updateOrderStatus} className="flex flex-col gap-2 bg-gray-50/50 p-2 rounded-lg border mt-1">
                     <input type="hidden" name="orderId" value={order.id} />
-                    <select
-                      name="status"
-                      defaultValue={order.status}
-                      className="text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    >
-                      <option value={order.status} disabled>
-                        {STATUS_LABELS[order.status]} (Current)
-                      </option>
-                      {ORDER_TRANSITIONS[order.status].map((status) => (
-                        <option key={status} value={status}>
-                          {STATUS_LABELS[status]}
+                    <div className="flex items-center gap-2">
+                      <select
+                        name="status"
+                        defaultValue={order.status}
+                        className="text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      >
+                        <option value={order.status} disabled>
+                          {STATUS_LABELS[order.status]} (Current)
                         </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-3 py-1 rounded transition-colors disabled:opacity-50"
-                      disabled={ORDER_TRANSITIONS[order.status].length === 0}
-                    >
-                      Update
-                    </button>
+                        {ORDER_TRANSITIONS[order.status].map((status) => {
+                          const isConfirmedOption = status === OrderStatus.CONFIRMED;
+                          const isPaymentRequired = isConfirmedOption && order.paymentStatus !== "RECEIVED";
+                          return (
+                            <option key={status} value={status} disabled={isPaymentRequired}>
+                              {STATUS_LABELS[status]} {isPaymentRequired ? "(Payment Required)" : ""}
+                            </option>
+                          );
+                        })}
+                        {order.status === OrderStatus.AWAITING_PAYMENT && order.paymentStatus !== "RECEIVED" && (
+                          <option value="MARK_AS_PAID">
+                            Mark as Paid
+                          </option>
+                        )}
+                      </select>
+                      <button
+                        type="submit"
+                        className="text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-3 py-1 rounded transition-colors disabled:opacity-50"
+                        disabled={ORDER_TRANSITIONS[order.status].length === 0}
+                      >
+                        Update
+                      </button>
+                    </div>
+
+                    {order.status === OrderStatus.CONFIRMED && (
+                      <div className="flex flex-wrap gap-3 mt-1 pt-2 border-t text-xs">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Shipping Method</label>
+                          <select name="shippingMethod" className="border rounded p-1 text-[11px] bg-white">
+                            <option value="COURIER">Courier Delivery</option>
+                            <option value="PICKUP">Warehouse Pickup</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tracking Number</label>
+                          <input 
+                            type="text" 
+                            name="trackingNumber" 
+                            placeholder="e.g. 1Z999AA10123456784" 
+                            className="border rounded p-1 text-[11px] w-40 bg-white"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Est. Arrival Date</label>
+                          <input 
+                            type="date" 
+                            name="estimatedArrivalDate" 
+                            className="border rounded p-1 text-[11px] bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </form>
                 </div>
               </div>
 
               {/* Payment Info Overlay */}
               <div className={`px-4 py-2 text-[10px] uppercase tracking-widest font-bold flex flex-wrap justify-between items-center gap-2 ${
-                order.paymentStatus === "RECEIVED" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+                order.status === OrderStatus.CANCELLED
+                  ? "bg-gray-200 text-gray-500"
+                  : order.paymentStatus === "RECEIVED"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-600"
               }`}>
                 <div className="flex items-center gap-3">
                   <span>Payment: {order.paymentStatus}</span>
+                  {order.status === OrderStatus.CANCELLED && order.paymentStatus === "RECEIVED" && (
+                    <span className="text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5 normal-case font-bold flex items-center gap-1">
+                      ⚠️ Refund Required
+                    </span>
+                  )}
                   {order.paymentReceivedAt && (
                     <span>Received: {new Date(order.paymentReceivedAt).toLocaleDateString()}</span>
                   )}
                 </div>
-                {order.paymentStatus !== "RECEIVED" && (
-                  <form action={markOrderAsPaid} className="flex items-center">
-                    <input type="hidden" name="orderId" value={order.id} />
-                    <button
-                      type="submit"
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-2 py-0.5 rounded text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      Mark as Paid
-                    </button>
-                  </form>
-                )}
               </div>
+
+              {/* Shipping Details Overlay */}
+              {(order.status === OrderStatus.SHIPPED || order.status === OrderStatus.DELIVERED) && order.shippingMethod && (
+                <div className="px-4 py-2 bg-yellow-50/50 border-b text-[10px] uppercase tracking-widest font-bold text-gray-600 flex flex-wrap justify-between items-center gap-2">
+                  <div className="flex items-center gap-3 font-semibold">
+                    <span>Method: {order.shippingMethod}</span>
+                    {order.trackingNumber && (
+                      <span>Tracking: <strong className="font-mono bg-white px-1.5 py-0.5 rounded border text-gray-700 normal-case">{order.trackingNumber}</strong></span>
+                    )}
+                    {order.estimatedArrivalDate && (
+                      <span>Est. Arrival: {new Date(order.estimatedArrivalDate).toLocaleDateString("sv-SE")}</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Delivery address */}
               <div className="px-4 py-2 bg-blue-50 border-b text-xs text-gray-600">

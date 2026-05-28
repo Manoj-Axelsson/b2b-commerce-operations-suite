@@ -16,6 +16,9 @@ export interface UpdateStatusParams {
   actorId: string;
   actorRole: string;
   notes?: string;
+  shippingMethod?: string;
+  trackingNumber?: string;
+  estimatedArrivalDate?: Date;
   signal?: AbortSignal;
   tx?: Prisma.TransactionClient;
 }

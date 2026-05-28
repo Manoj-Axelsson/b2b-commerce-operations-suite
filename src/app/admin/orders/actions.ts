@@ -33,15 +33,57 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
   const actorId = await verifyAdmin();
 
   const orderId = formData.get("orderId") as string;
-  const nextStatus = formData.get("status") as OrderStatus;
+  const nextStatus = formData.get("status") as string;
 
-  await updateOrderService({
-    orderId,
-    nextStatus,
-    actorId,
-    actorRole: "ADMIN",
-    notes: `Manual status update via Admin Dashboard to ${nextStatus}`,
-  });
+  if (nextStatus === "MARK_AS_PAID") {
+    await runManagedTransaction(undefined, async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { status: true },
+      });
+
+      if (!order) {
+        throw new Error("Order not found");
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.RECEIVED,
+          paymentReceivedAt: new Date(),
+          status: OrderStatus.CONFIRMED,
+        },
+      });
+
+      // Write audit event
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          previousStatus: order.status,
+          nextStatus: OrderStatus.CONFIRMED,
+          actorId,
+          actorRole: "ADMIN",
+          notes: "Payment manually marked as RECEIVED by Admin via dropdown and order confirmed",
+        },
+      });
+    });
+  } else {
+    const shippingMethod = (formData.get("shippingMethod") as string) || undefined;
+    const trackingNumber = (formData.get("trackingNumber") as string) || undefined;
+    const estDateRaw = formData.get("estimatedArrivalDate") as string;
+    const estimatedArrivalDate = estDateRaw && !isNaN(Date.parse(estDateRaw)) ? new Date(estDateRaw) : undefined;
+
+    await updateOrderService({
+      orderId,
+      nextStatus: nextStatus as OrderStatus,
+      actorId,
+      actorRole: "ADMIN",
+      notes: `Manual status update via Admin Dashboard to ${nextStatus}`,
+      shippingMethod,
+      trackingNumber,
+      estimatedArrivalDate,
+    });
+  }
 
   revalidatePath("/admin/orders");
 }
@@ -109,6 +151,7 @@ export async function markOrderAsPaid(formData: FormData): Promise<void> {
       data: {
         paymentStatus: PaymentStatus.RECEIVED,
         paymentReceivedAt: new Date(),
+        status: OrderStatus.CONFIRMED,
       },
     });
 
@@ -117,10 +160,10 @@ export async function markOrderAsPaid(formData: FormData): Promise<void> {
       data: {
         orderId,
         previousStatus: order.status,
-        nextStatus: order.status,
+        nextStatus: OrderStatus.CONFIRMED,
         actorId,
         actorRole: "ADMIN",
-        notes: "Payment manually marked as RECEIVED by Admin",
+        notes: "Payment manually marked as RECEIVED by Admin and order confirmed",
       },
     });
   });

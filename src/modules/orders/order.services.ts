@@ -4,6 +4,7 @@ import { ORDER_TRANSITIONS } from "./order.machine";
 import { UpdateStatusParams, OrderWithHistory } from "./order.types";
 import { runManagedTransaction } from "@/lib/managedTransaction";
 import { BusinessError } from "@/lib/error";
+import { enqueueNotification } from "@/modules/notifications/notification.service";
 
 /**
  * Fetch an order with its full history: items, adjustments, and event trail.
@@ -27,6 +28,9 @@ export async function updateOrderStatus({
   actorId,
   actorRole,
   notes,
+  shippingMethod,
+  trackingNumber,
+  estimatedArrivalDate,
   signal,
   tx,
 }: UpdateStatusParams): Promise<void> {
@@ -58,8 +62,18 @@ export async function updateOrderStatus({
       }
     }
 
-    // 4. Update the status
-    await orderRepository.update(orderId, { status: nextStatus }, currentTx);
+    // 4. Update the status & operational fields
+    const updateData: Prisma.OrderUpdateInput = { status: nextStatus };
+    if (nextStatus === OrderStatus.SHIPPED) {
+      updateData.shippingMethod = shippingMethod;
+      updateData.trackingNumber = trackingNumber;
+      updateData.estimatedArrivalDate = estimatedArrivalDate;
+      updateData.shippedAt = new Date();
+    } else if (nextStatus === OrderStatus.DELIVERED) {
+      updateData.deliveredAt = new Date();
+    }
+
+    await orderRepository.update(orderId, updateData, currentTx);
 
     // 5. Write audit event
     await orderRepository.createEvent(
@@ -73,6 +87,22 @@ export async function updateOrderStatus({
       },
       currentTx
     );
+
+    // 6. Enqueue status update notification if transitioning to SHIPPED via COURIER
+    if (nextStatus === OrderStatus.SHIPPED && shippingMethod === "COURIER") {
+      await enqueueNotification(
+        {
+          type: "ORDER_STATUS_UPDATE",
+          payload: {
+            orderId,
+            previousStatus: order.status,
+            nextStatus,
+            notes: notes ?? undefined,
+          },
+        },
+        currentTx
+      );
+    }
   };
 
   if (tx) return execute(tx);

@@ -258,6 +258,10 @@ model Order {
   paymentReceivedAt DateTime?
   shippedAt         DateTime?
   deliveredAt       DateTime?
+ 
+  shippingMethod       String?
+  trackingNumber       String?
+  estimatedArrivalDate DateTime?
 
   // ------------------------------------------------------
   // SYSTEM TIMESTAMPS & SECURITY
