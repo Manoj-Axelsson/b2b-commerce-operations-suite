@@ -181,9 +181,9 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                             </div>
 
                             {order.status === OrderStatus.AWAITING_PAYMENT && (
-                                <button className="w-full mt-8 bg-brand-gold text-brand-primary font-bold py-4 rounded-full uppercase tracking-widest hover:bg-white transition-colors">
-                                    Complete Payment
-                                </button>
+                                <div className="mt-8 text-center text-xs bg-white/10 rounded-2xl p-4 border border-white/20 text-brand-cream/80 leading-relaxed">
+                                    Please follow the payment instructions sent to your email. Once your payment is verified by our team, the status will update.
+                                </div>
                             )}
                         </div>
 

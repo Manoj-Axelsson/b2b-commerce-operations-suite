@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction } from "./actions";
+import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction, markOrderAsPaid } from "./actions";
 import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
 import { ORDER_TRANSITIONS } from "@/modules/orders/order.machine";
 
@@ -124,12 +124,25 @@ export default async function AdminOrdersPage() {
               </div>
 
               {/* Payment Info Overlay */}
-              <div className={`px-4 py-1 text-[10px] uppercase tracking-widest font-bold flex justify-between ${
+              <div className={`px-4 py-2 text-[10px] uppercase tracking-widest font-bold flex flex-wrap justify-between items-center gap-2 ${
                 order.paymentStatus === "RECEIVED" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
               }`}>
-                <span>Payment: {order.paymentStatus}</span>
-                {order.paymentReceivedAt && (
-                  <span>Received: {new Date(order.paymentReceivedAt).toLocaleDateString()}</span>
+                <div className="flex items-center gap-3">
+                  <span>Payment: {order.paymentStatus}</span>
+                  {order.paymentReceivedAt && (
+                    <span>Received: {new Date(order.paymentReceivedAt).toLocaleDateString()}</span>
+                  )}
+                </div>
+                {order.paymentStatus !== "RECEIVED" && (
+                  <form action={markOrderAsPaid} className="flex items-center">
+                    <input type="hidden" name="orderId" value={order.id} />
+                    <button
+                      type="submit"
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-2 py-0.5 rounded text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      Mark as Paid
+                    </button>
+                  </form>
                 )}
               </div>
 
