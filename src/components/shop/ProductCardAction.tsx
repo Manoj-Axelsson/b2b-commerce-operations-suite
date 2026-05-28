@@ -18,18 +18,16 @@ export const ProductCardAction = ({
     isDiscounted,
 }: ProductCardActionProps) => {
     return (
-        <div className="px-4 pb-4 sm:px-5 sm:pb-5 relative min-h-[50px] overflow-hidden">
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5 relative min-h-[36px] overflow-hidden">
             {isApproved ? (
-                <div className="relative w-full h-[50px]">
+                <div className="relative w-full h-[36px]">
                     {/* Passive Badge (shown by default, hidden on hover) */}
                     <div className="absolute inset-0 flex items-center justify-center transition-all duration-500 transform group-hover:opacity-0 group-hover:translate-y-4 opacity-100 translate-y-0">
                         <div className={cn(
-                            "flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest border",
+                            "flex items-center justify-center gap-2 w-full rounded-full px-5 py-2 font-bold text-[11px] uppercase tracking-widest transition-all duration-300 shadow-lg",
                             !isInStock 
-                                ? "bg-brand-border text-brand-primary border-brand-border/60" 
-                                : isDiscounted 
-                                    ? "bg-brand-gold/10 text-brand-gold-dark border-brand-gold/30" 
-                                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                ? "bg-brand-border text-muted-foreground cursor-not-allowed shadow-none border-none" 
+                                : "text-white bg-linear-to-r from-brand-gold-dark via-brand-gold to-brand-gold-dark border-none"
                         )}>
                             {!isInStock 
                                 ? "Out of stock" 
@@ -47,7 +45,12 @@ export const ProductCardAction = ({
             ) : (
                 <Link
                     href="/login"
-                    className="flex items-center justify-center gap-2 w-full rounded-full px-6 py-3 font-bold text-sm uppercase tracking-widest transition-all duration-300 bg-brand-border text-brand-primary hover:bg-brand-cream border border-brand-border/60"
+                    className={cn(
+                        "flex items-center justify-center gap-2 w-full rounded-full px-5 py-2 font-bold text-[11px] uppercase tracking-widest transition-all duration-300 shadow-lg",
+                        !isInStock 
+                            ? "bg-brand-border text-muted-foreground cursor-not-allowed shadow-none border-none" 
+                            : "text-white bg-linear-to-r from-brand-gold-dark via-brand-gold to-brand-gold-dark border-none hover:brightness-110"
+                    )}
                     title="Log in to order"
                 >
                     {!isInStock 

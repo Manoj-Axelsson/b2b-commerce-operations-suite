@@ -41,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.2.4",
     "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "postcss": "^8.5.10",
     "prisma": "^7.7.0",
     "tailwindcss": "^4",
@@ -55,5 +56,8 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": "eslint"
   }
 }
