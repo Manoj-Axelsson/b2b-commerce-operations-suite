@@ -56,6 +56,10 @@ for (const file of stagedFiles) {
         continue
       }
 
+      if (segment.startsWith("(") && segment.endsWith(")")) {
+        continue
+      }
+
       if (!isKebabCase(segment) && segment !== "components" && segment !== "types") {
         violations.push(`${file}: app route folders must use kebab-case.`)
       }

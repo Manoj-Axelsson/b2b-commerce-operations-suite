@@ -57,9 +57,13 @@ export default async function AccountPage() {
               {activePromotions.map((product) => {
                 const isUpcoming = product.discountStart && product.discountStart > new Date();
                 return (
-                  <div key={product.id} className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl border border-white flex justify-between items-center group hover:bg-white transition-all">
+                  <Link
+                    key={product.id}
+                    href={`/shop/${product.id}`}
+                    className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl border border-white flex justify-between items-center group hover:bg-white hover:shadow-md transition-all cursor-pointer"
+                  >
                     <div>
-                      <p className="text-sm font-bold text-slate-900">{product.name}</p>
+                      <p className="text-sm font-bold text-slate-900 group-hover:text-brand-primary transition-colors">{product.name}</p>
                       <p className="text-[10px] text-slate-500">{product.brand}</p>
                     </div>
                     <div className="text-right">
@@ -69,11 +73,11 @@ export default async function AccountPage() {
                       )}>
                         {isUpcoming ? "Coming Soon" : "Active Sale"}
                       </span>
-                      <p className="text-xs font-bold text-brand-primary mt-1">
+                      <p className="text-xs font-bold text-brand-primary mt-1 group-hover:underline">
                         View Item →
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
