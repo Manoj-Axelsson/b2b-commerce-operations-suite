@@ -106,11 +106,67 @@ export async function markOrderAsPaid(formData: FormData): Promise<void> {
       throw new Error("Order not found");
     }
 
+    const nextStatus = order.status === OrderStatus.AWAITING_PAYMENT ? OrderStatus.CONFIRMED : order.status;
+
     await tx.order.update({
       where: { id: orderId },
       data: {
         paymentStatus: PaymentStatus.RECEIVED,
         paymentReceivedAt: new Date(),
+        status: nextStatus,
+      },
+    });
+
+    // Write audit event
+    await tx.orderEvent.create({
+      data: {
+        orderId,
+        previousStatus: order.status,
+        nextStatus: nextStatus,
+        actorId,
+        actorRole: "ADMIN",
+        notes: nextStatus === OrderStatus.CONFIRMED
+          ? "Payment manually marked as RECEIVED by Admin, status transitioned to CONFIRMED"
+          : "Payment manually marked as RECEIVED by Admin",
+      },
+    });
+  });
+
+  revalidatePath("/admin/orders");
+}
+
+/**
+ * Server action: allocate transport details for an order in To Ship state.
+ */
+export async function allocateTransport(formData: FormData): Promise<void> {
+  const actorId = await verifyAdmin();
+  const orderId = formData.get("orderId") as string;
+  const transportMethod = formData.get("transportMethod") as string;
+  const trackingNumber = formData.get("trackingNumber") as string;
+  const estimatedArrivalRaw = formData.get("estimatedArrival") as string;
+
+  const estimatedArrival = estimatedArrivalRaw ? new Date(estimatedArrivalRaw) : null;
+
+  if (!transportMethod?.trim()) {
+    throw new Error("Transport method is required.");
+  }
+
+  await runManagedTransaction(undefined, async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { status: true },
+    });
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        transportMethod: transportMethod.trim(),
+        trackingNumber: trackingNumber?.trim() || null,
+        estimatedArrival,
       },
     });
 
@@ -122,7 +178,61 @@ export async function markOrderAsPaid(formData: FormData): Promise<void> {
         nextStatus: order.status,
         actorId,
         actorRole: "ADMIN",
-        notes: "Payment manually marked as RECEIVED by Admin",
+        notes: `Transport allocated: ${transportMethod.trim()}` +
+          (trackingNumber?.trim() ? ` (Tracking: ${trackingNumber.trim()})` : "") +
+          (estimatedArrival ? ` (Est. Arrival: ${estimatedArrival.toLocaleDateString("sv-SE")})` : ""),
+      },
+    });
+  });
+
+  revalidatePath("/admin/orders");
+}
+
+/**
+ * Server action: mark refund for a cancelled paid order as processed.
+ */
+export async function markRefundAsProcessed(formData: FormData): Promise<void> {
+  const actorId = await verifyAdmin();
+  const orderId = formData.get("orderId") as string;
+
+  await runManagedTransaction(undefined, async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { status: true, paymentStatus: true, isRefunded: true },
+    });
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    if (order.status !== OrderStatus.CANCELLED) {
+      throw new Error("Order must be cancelled to process a refund.");
+    }
+
+    if (order.paymentStatus !== PaymentStatus.RECEIVED) {
+      throw new Error("Order has no received payment to refund.");
+    }
+
+    if (order.isRefunded) {
+      throw new Error("Refund has already been processed.");
+    }
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        isRefunded: true,
+      },
+    });
+
+    // Write audit event
+    await tx.orderEvent.create({
+      data: {
+        orderId,
+        previousStatus: order.status,
+        nextStatus: order.status,
+        actorId,
+        actorRole: "ADMIN",
+        notes: "Refund processed and marked as resolved by Admin",
       },
     });
   });

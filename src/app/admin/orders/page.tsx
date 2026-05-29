@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_EMAIL } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction, markOrderAsPaid } from "./actions";
+import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction, markOrderAsPaid, allocateTransport, markRefundAsProcessed } from "./actions";
 import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
 import { ORDER_TRANSITIONS } from "@/modules/orders/order.machine";
 import Link from "next/link";
@@ -188,11 +188,14 @@ export default async function AdminOrdersPage({
                         <option value={order.status} disabled>
                           {STATUS_LABELS[order.status]} (Current)
                         </option>
-                        {ORDER_TRANSITIONS[order.status].map((status) => (
-                          <option key={status} value={status}>
-                            {STATUS_LABELS[status]}
-                          </option>
-                        ))}
+                        {ORDER_TRANSITIONS[order.status].map((status) => {
+                          const isDisabled = status === "SHIPPED" && !order.transportMethod;
+                          return (
+                            <option key={status} value={status} disabled={isDisabled}>
+                              {STATUS_LABELS[status]} {isDisabled ? "🔒 (Allocate Transport first)" : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                       <button
                         type="submit"
@@ -243,6 +246,180 @@ export default async function AdminOrdersPage({
                 {order.deliveryCity}, {order.deliveryCountry}
               </div>
 
+              {/* ERP Operational Checklist */}
+              {(order.status === "CONFIRMED" || 
+                (order.status === "CANCELLED" && order.paymentStatus === "RECEIVED")) && (
+                <div className="px-4 py-3 bg-slate-50 border-b text-xs">
+                  <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    ⚙️ ERP Operational Checklist
+                  </h4>
+                  
+                  {order.status === "CONFIRMED" && (
+                    <div className="space-y-3">
+                      {/* Checklist Items */}
+                      <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-1.5">
+                          {order.paymentStatus === "RECEIVED" ? (
+                            <span className="text-green-600 font-bold">✅ Payment Verified (Received)</span>
+                          ) : (
+                            <span className="text-red-600 font-bold">❌ Payment Verification Pending</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {order.transportMethod ? (
+                            <span className="text-green-600 font-bold">✅ Transport Allocated</span>
+                          ) : (
+                            <span className="text-red-600 font-bold">❌ Transport Pending</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Transport Info / Allocation Form */}
+                      {order.transportMethod ? (
+                        <div className="p-2.5 bg-green-50 border border-green-200 rounded text-[11px] text-green-800 space-y-1">
+                          <p className="font-semibold">Allocated Shipping Details:</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div><span className="font-medium text-green-700">Method:</span> {order.transportMethod}</div>
+                            <div><span className="font-medium text-green-700">Tracking:</span> {order.trackingNumber || "None"}</div>
+                            <div>
+                              <span className="font-medium text-green-700">Est. Arrival:</span>{" "}
+                              {order.estimatedArrival
+                                ? new Date(order.estimatedArrival).toLocaleDateString("sv-SE")
+                                : "N/A"}
+                            </div>
+                          </div>
+                          
+                          {/* Option to re-allocate / edit */}
+                          <details className="mt-2">
+                            <summary className="text-[10px] text-green-600 font-bold cursor-pointer hover:underline">
+                              Edit Transport Allocation
+                            </summary>
+                            <form action={allocateTransport} className="mt-2 grid grid-cols-1 sm:grid-cols-4 gap-2 items-end bg-white p-2 border border-green-200 rounded">
+                              <input type="hidden" name="orderId" value={order.id} />
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-gray-500 font-bold">Method *</label>
+                                <input
+                                  type="text"
+                                  name="transportMethod"
+                                  defaultValue={order.transportMethod}
+                                  required
+                                  placeholder="e.g. PostNord"
+                                  className="text-xs border rounded p-1 w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-gray-500 font-bold">Tracking No</label>
+                                <input
+                                  type="text"
+                                  name="trackingNumber"
+                                  defaultValue={order.trackingNumber || ""}
+                                  placeholder="e.g. RR123456SE"
+                                  className="text-xs border rounded p-1 w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-gray-500 font-bold">Est. Arrival</label>
+                                <input
+                                  type="date"
+                                  name="estimatedArrival"
+                                  defaultValue={
+                                    order.estimatedArrival
+                                      ? new Date(order.estimatedArrival).toISOString().split("T")[0]
+                                      : ""
+                                  }
+                                  className="text-xs border rounded p-1 w-full"
+                                />
+                              </div>
+                              <button
+                                type="submit"
+                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-[10px] py-1.5 px-3 rounded h-8 transition-colors"
+                              >
+                                Update
+                              </button>
+                            </form>
+                          </details>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 bg-red-50 border border-red-200 rounded space-y-2">
+                          <p className="text-[10px] text-red-800 font-semibold">Allocate transport before dispatching:</p>
+                          <form action={allocateTransport} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <div className="flex flex-col gap-1 bg-white p-1 rounded border">
+                              <label className="text-[9px] text-gray-500 font-bold">Method *</label>
+                              <input
+                                type="text"
+                                name="transportMethod"
+                                required
+                                placeholder="e.g. PostNord, DHL"
+                                className="text-xs border-0 outline-none p-0 focus:ring-0 w-full"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1 bg-white p-1 rounded border">
+                              <label className="text-[9px] text-gray-500 font-bold">Tracking No (Optional)</label>
+                              <input
+                                type="text"
+                                name="trackingNumber"
+                                placeholder="e.g. Tracking number"
+                                className="text-xs border-0 outline-none p-0 focus:ring-0 w-full"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1 bg-white p-1 rounded border">
+                              <label className="text-[9px] text-gray-500 font-bold">Est. Arrival (Optional)</label>
+                              <input
+                                type="date"
+                                name="estimatedArrival"
+                                className="text-xs border-0 outline-none p-0 focus:ring-0 w-full"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-xs py-2 px-3 rounded h-9 transition-colors"
+                            >
+                              Allocate Transport
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {order.status === "CANCELLED" && order.paymentStatus === "RECEIVED" && (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-green-600 font-bold">✅ Order Cancelled</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {order.isRefunded ? (
+                            <span className="text-green-600 font-bold">✅ Refund Processed & Resolved</span>
+                          ) : (
+                            <span className="text-red-600 font-bold">❌ Refund Pending</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {!order.isRefunded && (
+                        <div className="p-2.5 bg-red-50 border border-red-200 rounded flex justify-between items-center gap-4">
+                          <span className="text-[10px] text-red-800 font-medium">
+                            This pre-paid order is cancelled. Please initiate a refund to the customer.
+                          </span>
+                          <form action={markRefundAsProcessed}>
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <button
+                              type="submit"
+                              className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded text-[10px] uppercase tracking-wider transition-colors cursor-pointer shrink-0"
+                            >
+                              Mark Refund as Processed
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Order items */}
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
@@ -267,10 +444,17 @@ export default async function AdminOrdersPage({
                       <td className="p-3 font-mono text-xs text-gray-400">
                         {item.product.articleNo}
                       </td>
-                      <td className="p-3 text-gray-800">{item.productName}</td>
+                      <td className="p-3 text-gray-800">
+                        {item.productName}
+                        {item.discountApplied > 0 && (
+                          <span className="block text-[10px] text-green-600 font-bold mt-0.5">
+                            🏷️ Promotion: {item.appliedPromotionCode} (-{formatCurrency(item.discountApplied)})
+                          </span>
+                        )}
+                      </td>
                       <td className="p-3 text-center text-gray-600">{item.quantity}</td>
                       <td className="p-3 text-right text-gray-700 font-medium">
-                        {formatCurrency(Number(item.price) * item.quantity)}
+                        {formatCurrency(item.lineTotal)}
                       </td>
                     </tr>
                   ))}

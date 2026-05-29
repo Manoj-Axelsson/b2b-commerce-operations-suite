@@ -93,9 +93,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                               <tr key={item.id}>
                                 <td className="py-2 pr-2 text-gray-600 italic">
                                   {item.productName}
+                                  {item.discountApplied > 0 && (
+                                    <span className="block text-[10px] text-green-600 font-bold mt-0.5">
+                                      🏷️ Promotion: {item.appliedPromotionCode} (-{formatCurrency(item.discountApplied)})
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-2 px-2 text-gray-400">x{item.quantity}</td>
-                                <td className="py-2 pl-2 text-right font-medium">{formatCurrency(Number(item.price) * item.quantity)}</td>
+                                <td className="py-2 pl-2 text-right font-medium">{formatCurrency(item.lineTotal)}</td>
                               </tr>
                             ))}
                           </tbody>

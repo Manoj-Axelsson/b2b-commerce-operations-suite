@@ -226,6 +226,12 @@ model Order {
 
   sentToAdminMail Boolean @default(false)
 
+  isRefunded Boolean @default(false)
+
+  transportMethod String?
+  trackingNumber  String?
+  estimatedArrival DateTime?
+
   // ------------------------------------------------------
   // FINANCIALS
   // ------------------------------------------------------
