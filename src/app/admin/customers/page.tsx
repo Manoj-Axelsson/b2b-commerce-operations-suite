@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { saveCustomer } from "./actions";
+import { saveCustomer, toggleCustomerActive } from "./actions";
 import Link from "next/link";
 import { DeleteButton } from "./DeleteButton";
 import { ADMIN_EMAIL } from "@/lib/utils";
@@ -125,6 +125,15 @@ export default async function AdminCustomersPage({
                 <option value="false" className="text-red-600 font-bold">Pending (Prices hidden)</option>
               </select>
             </div>
+            {editingCustomer && (
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-blue-700 uppercase">Account Status</label>
+                <select name="isActive" defaultValue={editingCustomer?.isActive ? "true" : "false"} className="border p-2 rounded bg-white font-bold">
+                  <option value="true" className="text-green-600 font-bold">Active</option>
+                  <option value="false" className="text-red-600 font-bold">Deactivated</option>
+                </select>
+              </div>
+            )}
             {isCreating && (
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-blue-700 uppercase">Initial Password</label>
@@ -187,17 +196,37 @@ export default async function AdminCustomersPage({
                     </span>
                   </td>
                   <td className="p-4">
-                    {c.isApproved ? (
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase">Approved</span>
-                    ) : (
-                      <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-red-200">Pending</span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {c.isApproved ? (
+                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase w-max text-center">Approved</span>
+                      ) : (
+                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-red-200 w-max text-center">Pending</span>
+                      )}
+                      {!c.isActive && (
+                        <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-[10px] font-bold uppercase w-max text-center">Deactivated</span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end items-center gap-4 font-bold">
                       <Link href={`/admin/customers/${c.id}`} className="text-gray-500 hover:text-black transition text-xs">View History</Link>
                       <Link href={`?editId=${c.id}`} className="text-blue-600 hover:underline text-xs">Edit</Link>
-                      <DeleteButton id={c.id} />
+                      {c.orders.length > 0 ? (
+                        <form action={toggleCustomerActive} className="inline">
+                          <input type="hidden" name="id" value={c.id} />
+                          <input type="hidden" name="isActive" value={c.isActive ? "true" : "false"} />
+                          <button
+                            type="submit"
+                            className={`text-xs hover:underline cursor-pointer font-bold ${
+                              c.isActive ? "text-orange-600 hover:text-orange-800" : "text-green-600 hover:text-green-800"
+                            }`}
+                          >
+                            {c.isActive ? "Deactivate" : "Activate"}
+                          </button>
+                        </form>
+                      ) : (
+                        <DeleteButton id={c.id} />
+                      )}
                     </div>
                   </td>
                 </tr>

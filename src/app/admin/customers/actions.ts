@@ -17,6 +17,7 @@ interface CustomerFormPayload {
   password: string;
   role: string;
   isApproved: boolean;
+  isActive: boolean;
 }
 
 // ─── Authorization guard ────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ const parseCustomerPayload = (formData: FormData): CustomerFormPayload => ({
   password: (formData.get("password") as string) || "",
   role: (formData.get("role") as string) || "user",
   isApproved: formData.get("isApproved") === "true",
+  isActive: formData.get("isActive") !== "false",
 });
 
 export async function saveCustomer(formData: FormData): Promise<void> {
@@ -75,9 +77,16 @@ export async function saveCustomer(formData: FormData): Promise<void> {
           email: payload.email,
           role: finalRole,
           isApproved: finalApproved,
+          isActive: payload.isActive,
           emailVerified: isMasterAdmin ? true : undefined,
         },
       });
+
+      if (!payload.isActive) {
+        await tx.session.deleteMany({
+          where: { userId: payload.id },
+        });
+      }
     });
   } else {
 
@@ -128,7 +137,29 @@ export async function deleteCustomer(id: string): Promise<void> {
     await tx.user.delete({ where: { id } });
   });
 
-  revalidatePath("/admin/customers");
+  await revalidatePath("/admin/customers");
   redirect("/admin/customers");
+}
+
+export async function toggleCustomerActive(formData: FormData): Promise<void> {
+  await verifyAdmin();
+  const id = formData.get("id") as string;
+  const currentIsActive = formData.get("isActive") === "true";
+  const nextIsActive = !currentIsActive;
+
+  await runManagedTransaction(undefined, async (tx) => {
+    await tx.user.update({
+      where: { id },
+      data: { isActive: nextIsActive },
+    });
+
+    if (!nextIsActive) {
+      await tx.session.deleteMany({
+        where: { userId: id },
+      });
+    }
+  });
+
+  revalidatePath("/admin/customers");
 }
 // ↑ deleteCustomer scope closes here.

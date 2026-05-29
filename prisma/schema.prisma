@@ -18,6 +18,7 @@ model User {
   isApproved       Boolean         @default(false)
   role             String?
   twoFactorEnabled Boolean         @default(false)
+  isActive         Boolean         @default(true)
   accounts         Account[]
   addresses        Address[]
   cart             Cart?

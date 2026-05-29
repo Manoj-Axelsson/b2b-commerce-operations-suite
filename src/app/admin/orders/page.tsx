@@ -12,6 +12,7 @@ import { formatCurrency } from "@/lib/utils";
 import { updateOrderStatus, addAdjustmentAction, removeAdjustmentAction, markOrderAsPaid } from "./actions";
 import { OrderStatus, AdjustmentType } from "@/generated/prisma/client";
 import { ORDER_TRANSITIONS } from "@/modules/orders/order.machine";
+import Link from "next/link";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   IN_PROCESS: "bg-yellow-100 text-yellow-800",
@@ -31,7 +32,14 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "Cancelled",
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const params = await searchParams;
+  const activeTab = params.status || "ALL";
+
   const session = await auth.api.getSession({ headers: await headers() });
 
   const isAdmin = session?.user?.email === ADMIN_EMAIL || session?.user?.role === "admin";
@@ -53,22 +61,89 @@ export default async function AdminOrdersPage() {
     },
   });
 
+  const counts = {
+    ALL: orders.length,
+    IN_REVIEW: orders.filter(o => o.status === "IN_PROCESS").length,
+    AWAITING_PAYMENT: orders.filter(o => o.status === "AWAITING_PAYMENT").length,
+    TO_SHIP: orders.filter(o => o.status === "CONFIRMED").length,
+    COMPLETED_CANCELLED: orders.filter(o => ["DELIVERED", "SHIPPED", "CANCELLED"].includes(o.status)).length,
+  };
+
+  const filteredOrders = orders.filter(o => {
+    if (activeTab === "in_review") return o.status === "IN_PROCESS";
+    if (activeTab === "awaiting_payment") return o.status === "AWAITING_PAYMENT";
+    if (activeTab === "to_ship") return o.status === "CONFIRMED";
+    if (activeTab === "completed_cancelled") return ["DELIVERED", "SHIPPED", "CANCELLED"].includes(o.status);
+    return true; // ALL
+  });
+
   return (
     <main className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
-        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-          Total: {orders.length}
-        </span>
       </div>
 
-      {orders.length === 0 ? (
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200">
+        <Link
+          href="/admin/orders"
+          className={`px-4 py-2 border-b-2 font-semibold text-sm transition-colors ${
+            activeTab === "ALL" || !activeTab
+              ? "border-yellow-500 text-yellow-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          All ({counts.ALL})
+        </Link>
+        <Link
+          href="?status=in_review"
+          className={`px-4 py-2 border-b-2 font-semibold text-sm transition-colors ${
+            activeTab === "in_review"
+              ? "border-yellow-500 text-yellow-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          In Review ({counts.IN_REVIEW})
+        </Link>
+        <Link
+          href="?status=awaiting_payment"
+          className={`px-4 py-2 border-b-2 font-semibold text-sm transition-colors ${
+            activeTab === "awaiting_payment"
+              ? "border-yellow-500 text-yellow-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          Awaiting Payment ({counts.AWAITING_PAYMENT})
+        </Link>
+        <Link
+          href="?status=to_ship"
+          className={`px-4 py-2 border-b-2 font-semibold text-sm transition-colors ${
+            activeTab === "to_ship"
+              ? "border-yellow-500 text-yellow-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          To Ship ({counts.TO_SHIP})
+        </Link>
+        <Link
+          href="?status=completed_cancelled"
+          className={`px-4 py-2 border-b-2 font-semibold text-sm transition-colors ${
+            activeTab === "completed_cancelled"
+              ? "border-yellow-500 text-yellow-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          Completed / Cancelled ({counts.COMPLETED_CANCELLED})
+        </Link>
+      </div>
+
+      {filteredOrders.length === 0 ? (
         <p className="text-gray-500 italic bg-gray-50 p-6 rounded border text-center">
-          No orders yet.
+          No orders found.
         </p>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div
               key={order.id}
               className="bg-white border rounded-xl shadow-sm overflow-hidden"
@@ -96,44 +171,60 @@ export default async function AdminOrdersPage() {
                   </span>
 
                   {/* Status update form */}
-                  <form action={updateOrderStatus} className="flex items-center gap-2">
-                    <input type="hidden" name="orderId" value={order.id} />
-                    <select
-                      name="status"
-                      defaultValue={order.status}
-                      className="text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    >
-                      <option value={order.status} disabled>
-                        {STATUS_LABELS[order.status]} (Current)
-                      </option>
-                      {ORDER_TRANSITIONS[order.status].map((status) => (
-                        <option key={status} value={status}>
-                          {STATUS_LABELS[status]}
+                  {ORDER_TRANSITIONS[order.status].length > 0 && (
+                    <form action={updateOrderStatus} className="flex items-center gap-2">
+                      <input type="hidden" name="orderId" value={order.id} />
+                      <input
+                        type="text"
+                        name="notes"
+                        placeholder="Reason/Notes (optional)..."
+                        className="text-xs border rounded px-2 py-1 w-48 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      />
+                      <select
+                        name="status"
+                        defaultValue={order.status}
+                        className="text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      >
+                        <option value={order.status} disabled>
+                          {STATUS_LABELS[order.status]} (Current)
                         </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-3 py-1 rounded transition-colors disabled:opacity-50"
-                      disabled={ORDER_TRANSITIONS[order.status].length === 0}
-                    >
-                      Update
-                    </button>
-                  </form>
+                        {ORDER_TRANSITIONS[order.status].map((status) => (
+                          <option key={status} value={status}>
+                            {STATUS_LABELS[status]}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-3 py-1 rounded transition-colors"
+                      >
+                        Update
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
 
               {/* Payment Info Overlay */}
               <div className={`px-4 py-2 text-[10px] uppercase tracking-widest font-bold flex flex-wrap justify-between items-center gap-2 ${
-                order.paymentStatus === "RECEIVED" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+                order.status === "CANCELLED" && order.paymentStatus === "RECEIVED"
+                  ? "bg-gray-500 text-white"
+                  : order.paymentStatus === "RECEIVED"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-200 text-gray-600"
               }`}>
                 <div className="flex items-center gap-3">
                   <span>Payment: {order.paymentStatus}</span>
                   {order.paymentReceivedAt && (
                     <span>Received: {new Date(order.paymentReceivedAt).toLocaleDateString()}</span>
                   )}
+                  {order.status === "CANCELLED" && order.paymentStatus === "RECEIVED" && (
+                    <span className="ml-4 bg-red-600 text-white px-2 py-0.5 rounded font-extrabold animate-pulse text-[9px]">
+                      ⚠️ Refund Required
+                    </span>
+                  )}
                 </div>
-                {order.paymentStatus !== "RECEIVED" && (
+                {order.paymentStatus !== "RECEIVED" && order.status !== "CANCELLED" && (
                   <form action={markOrderAsPaid} className="flex items-center">
                     <input type="hidden" name="orderId" value={order.id} />
                     <button

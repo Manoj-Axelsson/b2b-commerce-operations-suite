@@ -33,6 +33,13 @@ export default function LoginPage() {
     // Fetch real user (with role)
     const res = await fetch("/api/user");
 
+    if (res.status === 403) {
+      const data = await res.json();
+      await authClient.signOut();
+      setError(data.error || "Your account has been deactivated. Please contact support.");
+      return;
+    }
+
     if (!res.ok) {
       setError("Failed to load user data");
       return;

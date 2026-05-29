@@ -4,6 +4,7 @@ import { ORDER_TRANSITIONS } from "./order.machine";
 import { UpdateStatusParams, OrderWithHistory } from "./order.types";
 import { runManagedTransaction } from "@/lib/managedTransaction";
 import { BusinessError } from "@/lib/error";
+import { enqueueNotification } from "@/modules/notifications/notification.service";
 
 /**
  * Fetch an order with its full history: items, adjustments, and event trail.
@@ -73,6 +74,24 @@ export async function updateOrderStatus({
       },
       currentTx
     );
+
+    // 6. Enqueue outbox email notification if applicable
+    const notifiedStatuses: string[] = ["CANCELLED", "AWAITING_PAYMENT", "SHIPPED", "DELIVERED"];
+    if (notifiedStatuses.includes(nextStatus)) {
+      await enqueueNotification(
+        {
+          type: "ORDER_STATUS_UPDATE",
+          payload: {
+            orderId,
+            previousStatus: order.status,
+            nextStatus,
+            notes: notes ?? undefined,
+          },
+          dedupeKey: `order-status-${orderId}-${nextStatus}`,
+        },
+        currentTx
+      );
+    }
   };
 
   if (tx) return execute(tx);

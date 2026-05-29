@@ -6,9 +6,9 @@ import { formatCurrency } from "@/lib/utils";
 import { OrderStatus } from "@/generated/prisma/client";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
-  IN_PROCESS: "In Review",
-  AWAITING_PAYMENT: "Awaiting Payment",
-  CONFIRMED: "Processing",
+  IN_PROCESS: "Submitted",
+  AWAITING_PAYMENT: "Payment Requested",
+  CONFIRMED: "Confirmed",
   SHIPPED: "Shipped",
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",

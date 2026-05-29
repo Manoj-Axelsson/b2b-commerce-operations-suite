@@ -34,13 +34,15 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
 
   const orderId = formData.get("orderId") as string;
   const nextStatus = formData.get("status") as OrderStatus;
+  const notesRaw = formData.get("notes") as string;
+  const notes = notesRaw?.trim() || `Manual status update via Admin Dashboard to ${nextStatus}`;
 
   await updateOrderService({
     orderId,
     nextStatus,
     actorId,
     actorRole: "ADMIN",
-    notes: `Manual status update via Admin Dashboard to ${nextStatus}`,
+    notes,
   });
 
   revalidatePath("/admin/orders");

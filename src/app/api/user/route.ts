@@ -28,11 +28,16 @@ export async function GET(req: Request) {
         emailVerified: true,
         role: true,
         isApproved: true,
+        isActive: true,
       },
     });
 
     if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (!dbUser.isActive) {
+      return NextResponse.json({ error: "Your account has been deactivated. Please contact support." }, { status: 403 });
     }
 
     // A user is treated as an admin if they have the primary admin email
