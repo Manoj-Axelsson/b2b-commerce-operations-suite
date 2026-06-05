@@ -9,23 +9,22 @@ on:
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
-    # Env vars are required at job level so postinstall (prisma generate) has DATABASE_URL
+    # Env vars are required at job level, so post install (prisma generate) has DATABASE_URL
     # available during npm ci — the env() helper in prisma.config.ts throws if it is missing.
     env:
       DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
       BETTER_AUTH_SECRET: "ci-secret-for-build"
       NEXT_PUBLIC_BETTER_AUTH_URL: "http://localhost:3000"
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     permissions:
       contents: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5.0.0
         with:
           node-version: 22
           cache: 'npm'
