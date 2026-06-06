@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {
@@ -21,7 +27,7 @@ const nextConfig: NextConfig = {
             value: "DENY",
           },
           {
-            key: "x-rajput-runtime",
+            key: "x-b2b-runtime",
             value: "node-24-lts",
           },
         ],
